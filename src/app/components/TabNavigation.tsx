@@ -4,23 +4,14 @@ interface TabNavigationProps {
 }
 
 const tabs = [
-  { id: 'executive', label: 'Executive Overview' },
-  { id: 'rpOverview', label: 'RP Overview' },
-  { id: 'nonRpOverview', label: 'Non-RP Overview' },
-  { id: 'partners', label: 'Partner Performance' },
-  { id: 'pipeline', label: 'Deal Pipeline' },
-  { id: 'rpplus', label: 'RP+ Network' },
-  { id: 'rpmPerformance', label: 'RPM Performance' },
-  { id: 'marketPotential', label: 'Market Potential' },
-  { id: 'dataIntegrity', label: 'Data Integrity' },
-  { id: 'financeOverview', label: 'Finance Overview' },
-  { id: 'incomeStatement', label: 'Income Statement' },
+  { id: 'financeOverview', label: 'Executive Finance Overview' },
+  { id: 'salesOverview', label: 'Sales Overview' },
   { id: 'revenueRecognition', label: 'Revenue Recognition' },
-  { id: 'salesLifecycle', label: 'Sales Lifecycle' },
+  { id: 'incomeStatement', label: 'Income Statement' },
   { id: 'balanceSheet', label: 'Balance Sheet' },
-  { id: 'cashFlow', label: 'Cash Flow' },
-  { id: 'rpFinancials', label: 'RP Financials' },
-  { id: 'exceptionsReconciliation', label: 'Exceptions' },
+  { id: 'cashFlow', label: 'Statement of Cash Flows' },
+  { id: 'referralPartnerFinancialPerformance', label: 'Referral Partner Financial Performance' },
+  { id: 'exceptionsReconciliation', label: 'Exceptions & Reconciliation' },
 ];
 
 export default function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {

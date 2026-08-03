@@ -116,7 +116,7 @@ export function FinanceOverview() {
     .sort((a, b) => b[1] - a[1]);
 
   return (
-    <PageShell title="Finance Overview">
+    <PageShell title="Executive Finance Overview">
       <div className="grid grid-cols-5 gap-3">
         <PowerBICard title="Booked Sales" value={formatMoney(financeSummary.bookedSales)} subtitle="+8.4% vs prior period" />
         <PowerBICard title="Earned Revenue" value={formatMoney(financeSummary.earnedRevenue)} subtitle="+6.1% vs prior period" />
@@ -322,7 +322,7 @@ export function RevenueRecognition() {
   );
 }
 
-export function SalesLifecycle() {
+export function SalesOverview() {
   const stages = [
     ['Booked Sales', financeSummary.bookedSales, financeSummary.bookedAcres, financeDeals.length, '100%', 0],
     ['Earned Revenue Stage 1', 1223000, 122300, 8, '100%', 18],
@@ -332,7 +332,7 @@ export function SalesLifecycle() {
   ];
 
   return (
-    <PageShell title="Sales Lifecycle">
+    <PageShell title="Sales Overview">
       <div className="bg-white border border-[#CFD5D0] p-4">
         <div className="text-sm font-semibold text-[#006637] mb-3" style={{ fontFamily: 'Merriweather, serif' }}>Booked Sales to Final Sales Lifecycle</div>
         <div className="space-y-3">
@@ -382,10 +382,10 @@ export function SalesLifecycle() {
             <Line type="monotone" dataKey="conversion" stroke="#3D654D" strokeWidth={2} name="Conversion %" />
           </LineChart>
         </ChartCard>
-        <ChartCard title="Sales by Referral Partner Manager" subtitle="Booked sales tied to referral partner managers">
-          <BarChart data={[{ rpm: 'Sarah Keller', value: 1014000 }, { rpm: 'Marcus Lee', value: 1188000 }, { rpm: 'Nina Patel', value: 630000 }]}>
+        <ChartCard title="Sales by Partner Program Manager" subtitle="Booked sales tied to finance program managers">
+          <BarChart data={[{ manager: 'Sarah Keller', value: 1014000 }, { manager: 'Marcus Lee', value: 1188000 }, { manager: 'Nina Patel', value: 630000 }]}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
-            <XAxis dataKey="rpm" tick={chartText} />
+            <XAxis dataKey="manager" tick={chartText} />
             <YAxis tick={chartText} tickFormatter={moneyAxis} />
             <Tooltip contentStyle={{ fontFamily: 'Source Sans 3, sans-serif' }} formatter={moneyTip} />
             <Bar dataKey="value" fill="#358540" name="Booked Sales" />
@@ -445,7 +445,7 @@ export function CashFlow() {
   ];
 
   return (
-    <PageShell title="Cash Flow">
+    <PageShell title="Statement of Cash Flows">
       <div className="grid grid-cols-4 gap-3">
         <PowerBICard title="Beginning Cash" value={formatMoney(1410000)} subtitle="Start of period" />
         <PowerBICard title="Net Change in Cash" value={formatMoney(430000)} subtitle="Operating + investing + financing" />
@@ -499,46 +499,46 @@ export function CashFlow() {
   );
 }
 
-export function RPFinancials() {
-  const rpDeals = financeDeals.filter((deal) => deal.source === 'Referral Partner');
-  const rpRevenue = rpDeals.reduce((total, deal) => total + earnedForFinanceDeal(deal), 0);
-  const rows = rpDeals.map((deal) => [deal.referralPartner, deal.rpm, deal.customer, earnedForFinanceDeal(deal), Math.round(earnedForFinanceDeal(deal) * 0.12), Math.round(earnedForFinanceDeal(deal) * 0.88), '3.9x']);
+export function ReferralPartnerFinancialPerformance() {
+  const referralPartnerDeals = financeDeals.filter((deal) => deal.source === 'Referral Partner');
+  const referralPartnerRevenue = referralPartnerDeals.reduce((total, deal) => total + earnedForFinanceDeal(deal), 0);
+  const rows = referralPartnerDeals.map((deal) => [deal.referralPartner, deal.partnerProgramManager, deal.customer, earnedForFinanceDeal(deal), Math.round(earnedForFinanceDeal(deal) * 0.12), Math.round(earnedForFinanceDeal(deal) * 0.88), '3.9x']);
 
   return (
     <PageShell title="Referral Partner Financial Performance">
       <div className="grid grid-cols-4 gap-3">
-        <PowerBICard title="RP Earned Revenue" value={formatMoney(rpRevenue)} subtitle="Referral Partner source" />
-        <PowerBICard title="RP Final Sales" value={formatMoney(555000)} subtitle="Paid RP accounts" />
-        <PowerBICard title="RP Program Expenses" value={formatMoney(681000)} subtitle="YTD program cost" />
-        <PowerBICard title="RP Net Contribution" value={formatMoney(rpRevenue - 681000)} subtitle="Earned revenue less expenses" />
-        <PowerBICard title="RP ROI" value="3.6x" subtitle="Net contribution / expense" />
-        <PowerBICard title="Revenue per RP" value={formatMoney(Math.round(rpRevenue / 3))} subtitle="Active financial RP" />
-        <PowerBICard title="Cost per RP" value={formatMoney(227000)} subtitle="Program expenses / RP" />
+        <PowerBICard title="Referral Partner Earned Revenue" value={formatMoney(referralPartnerRevenue)} subtitle="Referral Partner source" />
+        <PowerBICard title="Referral Partner Final Sales" value={formatMoney(555000)} subtitle="Paid referral partner accounts" />
+        <PowerBICard title="Referral Partner Program Expenses" value={formatMoney(681000)} subtitle="YTD program cost" />
+        <PowerBICard title="Referral Partner Net Contribution" value={formatMoney(referralPartnerRevenue - 681000)} subtitle="Earned revenue less expenses" />
+        <PowerBICard title="Referral Partner ROI" value="3.6x" subtitle="Net contribution / expense" />
+        <PowerBICard title="Revenue per Referral Partner" value={formatMoney(Math.round(referralPartnerRevenue / 3))} subtitle="Active financial referral partner" />
+        <PowerBICard title="Cost per Referral Partner" value={formatMoney(227000)} subtitle="Program expenses / referral partner" />
         <PowerBICard title="Incentive Payouts" value={formatMoney(323000)} subtitle="Accrued and paid" />
       </div>
       <div className="bg-white border border-[#CFD5D0] p-4">
         <div className="flex gap-1">
-          {['Total RP Program', 'Referral Partner Manager', 'Individual Referral Partner'].map((view, index) => (
+          {['Total Referral Partner Program', 'Partner Program Manager', 'Individual Referral Partner'].map((view, index) => (
             <button key={view} className={`px-4 py-2 text-sm font-semibold border-b-2 ${index === 0 ? 'text-[#006637] border-[#006637] bg-[#E6EEE7]' : 'text-[#3D654D] border-transparent hover:bg-[#F5F7F6]'}`} style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{view}</button>
           ))}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <ChartCard title="RP Earned Revenue vs. RP Expenses" subtitle="Referral Partner financial contribution">
+        <ChartCard title="Referral Partner Earned Revenue vs. Expenses" subtitle="Referral Partner financial contribution">
           <BarChart data={monthlyFinance.map((m) => ({ month: m.month, revenue: m.referralPartner, expenses: Math.round(m.referralPartner * 0.28) }))}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
             <XAxis dataKey="month" tick={chartText} />
             <YAxis tick={chartText} tickFormatter={moneyAxis} />
             <Tooltip contentStyle={{ fontFamily: 'Source Sans 3, sans-serif' }} formatter={moneyTip} />
             <Legend wrapperStyle={chartText} />
-            <Bar dataKey="revenue" fill="#234E2A" name="RP Earned Revenue" />
-            <Bar dataKey="expenses" fill="#D5741C" name="RP Expenses" />
+            <Bar dataKey="revenue" fill="#234E2A" name="Referral Partner Earned Revenue" />
+            <Bar dataKey="expenses" fill="#D5741C" name="Referral Partner Expenses" />
           </BarChart>
         </ChartCard>
-        <ChartCard title="RP ROI by Referral Partner Manager" subtitle="Financial return by manager">
-          <BarChart data={[{ rpm: 'Sarah Keller', roi: 4.2 }, { rpm: 'Marcus Lee', roi: 3.7 }, { rpm: 'Nina Patel', roi: 2.8 }]}>
+        <ChartCard title="Referral Partner ROI by Program Manager" subtitle="Financial return by manager">
+          <BarChart data={[{ manager: 'Sarah Keller', roi: 4.2 }, { manager: 'Marcus Lee', roi: 3.7 }, { manager: 'Nina Patel', roi: 2.8 }]}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
-            <XAxis dataKey="rpm" tick={chartText} />
+            <XAxis dataKey="manager" tick={chartText} />
             <YAxis tick={chartText} />
             <Tooltip contentStyle={{ fontFamily: 'Source Sans 3, sans-serif' }} />
             <Bar dataKey="roi" fill="#358540" name="ROI" />
@@ -549,14 +549,14 @@ export function RPFinancials() {
         <FinanceTable columns={['Top Referral Partners', 'Earned Revenue']} rows={rows.map((row) => [row[0], row[3]]).sort((a: any, b: any) => b[1] - a[1])} />
         <FinanceTable columns={['Lowest-Performing Referral Partners', 'Earned Revenue']} rows={rows.map((row) => [row[0], row[3]]).sort((a: any, b: any) => a[1] - b[1])} />
       </div>
-      <FinanceTable columns={['Referral Partner', 'RPM', 'Customer', 'RP Earned Revenue', 'Incentive Payouts', 'RP Net Contribution', 'RP ROI']} rows={rows} />
+      <FinanceTable columns={['Referral Partner', 'Program Manager', 'Customer', 'Referral Partner Earned Revenue', 'Incentive Payouts', 'Referral Partner Net Contribution', 'Referral Partner ROI']} rows={rows} />
     </PageShell>
   );
 }
 
 export function ExceptionsReconciliation() {
   return (
-    <PageShell title="Exceptions and Reconciliation">
+    <PageShell title="Exceptions & Reconciliation">
       <div className="grid grid-cols-3 gap-3">
         <PowerBICard title="Open Exceptions" value={3} subtitle="Open or in review" />
         <PowerBICard title="Critical Exceptions" value={1} subtitle="Immediate finance review" />

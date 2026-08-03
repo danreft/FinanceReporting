@@ -1,19 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import TabNavigation from './components/TabNavigation';
-import GlobalSlicers from './components/GlobalSlicers';
 import FinanceSlicers, { type FinanceFilterValue } from './components/FinanceSlicers';
-import type { TimeFrameValue } from './components/TimeFrameSlicer';
-import type { RpmFilterValue } from './components/RpmSlicer';
-import ExecutiveOverview from './pages/ExecutiveOverview';
-import RPOverview from './pages/RPOverview';
-import NonRPOverview from './pages/NonRPOverview';
-import PartnerPerformance from './pages/PartnerPerformance';
-import DealPipeline from './pages/DealPipeline';
-import RPPlusNetwork from './pages/RPPlusNetwork';
-import RPMPerformance from './pages/RPMPerformance';
-import MarketPotential from './pages/MarketPotential';
-import DataIntegrity from './pages/DataIntegrity';
-import { generateMockDataV3Updated } from './data/mockDataV3Updated';
 import {
   BalanceSheet,
   CashFlow,
@@ -21,24 +8,12 @@ import {
   FinanceOverview,
   IncomeStatement,
   RevenueRecognition,
-  RPFinancials,
-  SalesLifecycle,
+  ReferralPartnerFinancialPerformance,
+  SalesOverview,
 } from './pages/FinancePages';
 
-// Use V3 Updated Mock Data (Geography-Enabled)
-
 export default function App() {
-  const [activeTab, setActiveTab] = useState('executive');
-  const [filters, setFilters] = useState<{ timeFrame: TimeFrameValue; rpm: RpmFilterValue; [key: string]: any }>({
-    timeFrame: { selectedMonths: [], useCustom: false },
-    businessType: 'all',
-    tier: 'all',
-    dealStage: 'all',
-    rpm: { rpm: 'all', associate: 'all' },
-    dealValueRange: 'all',
-    acresRange: 'all',
-    stateRegion: 'all',
-  });
+  const [activeTab, setActiveTab] = useState('financeOverview');
   const [financeFilters, setFinanceFilters] = useState<FinanceFilterValue>({
     reportingPeriod: 'yearToDate',
     department: 'all',
@@ -46,64 +21,30 @@ export default function App() {
     comparisonPeriod: 'priorYear',
   });
 
-  const mockData = useMemo(() => generateMockDataV3Updated(filters), [filters]);
-  const financeTabs = [
-    'financeOverview',
-    'incomeStatement',
-    'revenueRecognition',
-    'salesLifecycle',
-    'balanceSheet',
-    'cashFlow',
-    'rpFinancials',
-    'exceptionsReconciliation',
-  ];
-  const isFinanceTab = financeTabs.includes(activeTab);
-
-  const handleFilterChange = (filterName: string, value: string | TimeFrameValue | RpmFilterValue) => {
-    setFilters((prev) => ({ ...prev, [filterName]: value }));
-  };
   const handleFinanceFilterChange = (filterName: keyof FinanceFilterValue, value: string) => {
     setFinanceFilters((prev) => ({ ...prev, [filterName]: value }));
   };
 
   const renderActivePage = () => {
     switch (activeTab) {
-      case 'executive':
-        return <ExecutiveOverview data={mockData.executive} />;
-      case 'rpOverview':
-        return <RPOverview data={mockData.rpOverview} />;
-      case 'nonRpOverview':
-        return <NonRPOverview data={mockData.nonRpOverview} />;
-      case 'partners':
-        return <PartnerPerformance data={mockData.partners} />;
-      case 'pipeline':
-        return <DealPipeline data={mockData.pipeline} />;
-      case 'rpplus':
-        return <RPPlusNetwork data={mockData.rpPlus} />;
-      case 'rpmPerformance':
-        return <RPMPerformance data={mockData.rpmPerformance} />;
-      case 'marketPotential':
-        return <MarketPotential data={mockData.marketPotential} />;
-      case 'dataIntegrity':
-        return <DataIntegrity data={mockData.executive} />;
       case 'financeOverview':
         return <FinanceOverview />;
-      case 'incomeStatement':
-        return <IncomeStatement />;
+      case 'salesOverview':
+        return <SalesOverview />;
       case 'revenueRecognition':
         return <RevenueRecognition />;
-      case 'salesLifecycle':
-        return <SalesLifecycle />;
+      case 'incomeStatement':
+        return <IncomeStatement />;
       case 'balanceSheet':
         return <BalanceSheet />;
       case 'cashFlow':
         return <CashFlow />;
-      case 'rpFinancials':
-        return <RPFinancials />;
+      case 'referralPartnerFinancialPerformance':
+        return <ReferralPartnerFinancialPerformance />;
       case 'exceptionsReconciliation':
         return <ExceptionsReconciliation />;
       default:
-        return <ExecutiveOverview data={mockData.executive} />;
+        return <FinanceOverview />;
     }
   };
 
@@ -121,7 +62,7 @@ export default function App() {
             </svg>
           </div>
           <span className="font-semibold text-lg" style={{ fontFamily: 'Merriweather, serif' }}>
-            Referral Partner Performance
+            Finance Reporting
           </span>
         </div>
         <div className="text-right">
@@ -129,7 +70,7 @@ export default function App() {
             Last Refreshed: Apr 24, 2026, 8:15 AM
           </div>
           <div className="text-xs opacity-80" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
-            Data Source: Pipedrive + Referral Partner Mapping
+            Data Source: Finance Reporting Data Model
           </div>
         </div>
       </div>
@@ -142,11 +83,7 @@ export default function App() {
       {/* Main Content Area with Sidebar */}
       <div className="flex flex-1 min-h-0">
         {/* Global Slicers Sidebar */}
-        {isFinanceTab ? (
-          <FinanceSlicers filters={financeFilters} onFilterChange={handleFinanceFilterChange} />
-        ) : (
-          <GlobalSlicers filters={filters} onFilterChange={handleFilterChange} />
-        )}
+        <FinanceSlicers filters={financeFilters} onFilterChange={handleFinanceFilterChange} />
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto">
