@@ -156,10 +156,10 @@ const earnedForDeal = (deal: (typeof financeDeals)[number]) =>
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
 export const financeSummary = {
-  bookedSales: sum(financeDeals.map((deal) => deal.contractValue)),
+  bookSales: sum(financeDeals.map((deal) => deal.contractValue)),
   earnedRevenue: sum(financeDeals.map(earnedForDeal)),
   finalSales: sum(financeDeals.map((deal) => deal.finalSales)),
-  bookedAcres: sum(financeDeals.map((deal) => deal.acres)),
+  bookAcres: sum(financeDeals.map((deal) => deal.acres)),
   earnedAcres: 85300,
   finalAcres: sum(financeDeals.map((deal) => deal.finalAcres)),
   cashBalance: 1840000,
@@ -170,7 +170,7 @@ export const financeSummary = {
 
 export const monthlyFinance = months.map((month, index) => ({
   month,
-  bookedSales: [555000, 336000, 1095000, 459000, 837000, 387000][index],
+  bookSales: [555000, 336000, 1095000, 459000, 837000, 387000][index],
   earnedRevenue: [185000, 297000, 409000, 477000, 725000, 467000][index],
   finalSales: [0, 0, 555000, 336000, 0, 0][index],
   direct: [0, 112000, 112000, 210000, 167000, 98000][index],
@@ -180,6 +180,82 @@ export const monthlyFinance = months.map((month, index) => ({
   inflows: [420000, 515000, 640000, 610000, 705000, 735000][index],
   outflows: [390000, 410000, 465000, 575000, 640000, 685000][index],
 }));
+
+// Mock executive overview data used when connected finance-system data is unavailable.
+export const executiveTrend = monthlyFinance.map((item) => ({
+  ...item,
+  priorEarnedRevenue: Math.round(item.earnedRevenue * 0.88),
+  priorExpenses: Math.round(item.expenses * 0.91),
+  earnedRevenueVariance: Math.round(item.earnedRevenue - item.earnedRevenue * 0.88),
+  expenseVariance: Math.round(item.expenses - item.expenses * 0.91),
+}));
+
+// Mock cash outlook data for the Executive Snapshot only.
+export const cashFlowOutlook = [
+  ['Beginning Cash', 1840000],
+  ['Expected Inflows', 735000],
+  ['Expected Outflows', -685000],
+  ['Projected Ending Cash', 1890000],
+];
+
+// Mock cash flow statement data used until statement-of-cash-flows detail is connected.
+export const cashFlowStatementRows = [
+  ['Operating Activities', ''],
+  ['Customer Collections', 735000],
+  ['Payroll Payments', -265000],
+  ['Vendor Payments', -250000],
+  ['Other Operating Cash Flow', 210000],
+  ['Net Cash from Operating Activities', 430000],
+  ['Investing Activities', ''],
+  ['Capital Expenditures', -120000],
+  ['Net Cash from Investing Activities', -120000],
+  ['Financing Activities', ''],
+  ['Financing Proceeds', 150000],
+  ['Debt Service', -30000],
+  ['Net Cash from Financing Activities', 120000],
+  ['Net Change in Cash', 430000],
+  ['Beginning Cash Balance', 1410000],
+  ['Ending Cash Balance', 1840000],
+];
+
+// Mock near-term cash forecast used for the Cash Flow Outlook section.
+export const cashFlowOutlookDetail = [
+  ['Expected Customer Collections', 735000],
+  ['Upcoming Payroll', -265000],
+  ['Upcoming Vendor Payments', -250000],
+  ['Other Expected Inflows', 120000],
+  ['Other Expected Outflows', -170000],
+  ['Projected Ending Cash', 2010000],
+];
+
+// Mock actual-vs-forecast variance data for cash flow review.
+export const cashFlowVariance = [
+  ['Operating Cash Flow', 430000, 395000],
+  ['Investing Cash Flow', -120000, -95000],
+  ['Financing Cash Flow', 120000, 100000],
+  ['Free Cash Flow', 310000, 300000],
+  ['Ending Cash', 1840000, 1795000],
+];
+
+// Mock monthly cash flow trend with actuals and forecast indicators.
+export const monthlyCashFlowTrend = monthlyFinance.map((item, index) => ({
+  month: item.month,
+  operatingCashFlow: item.inflows - item.outflows + [0, 0, 35000, 0, 0, 380000][index],
+  investingCashFlow: [-25000, -20000, -15000, -18000, -22000, -20000][index],
+  financingCashFlow: [0, 25000, 0, 30000, 35000, 30000][index],
+  freeCashFlow: item.inflows - item.outflows - [-25000, -20000, -15000, -18000, -22000, -20000][index],
+  endingCash: item.cashBalance,
+  forecastOperatingCashFlow: item.inflows - item.outflows + [12000, 18000, 28000, 16000, 25000, 340000][index],
+  forecastEndingCash: item.cashBalance - [10000, -5000, 12000, -15000, 8000, 45000][index],
+}));
+
+// Mock AR/AP status summary for aging and near-term obligation visualization.
+export const arApSummary = [
+  ['Total AR', 940000],
+  ['Total AP', 520000],
+  ['Overdue AR', 290000],
+  ['Upcoming AP', 360000],
+];
 
 export const expenseByDepartment = [
   { department: 'Sales', value: 420000 },
@@ -206,24 +282,43 @@ export const incomeStatementRows = [
   ['Net Income', 133000, 186000, 1002000, 652000],
 ];
 
-export const balanceSheetRows = [
-  ['Cash and Cash Equivalents', 1840000],
-  ['Accounts Receivable', 940000],
-  ['Prepaid Expenses', 180000],
-  ['Other Current Assets', 90000],
-  ['Property and Equipment', 620000],
-  ['Other Assets', 130000],
-  ['Total Assets', 3800000],
-  ['Accounts Payable', 520000],
-  ['Accrued Payroll', 240000],
-  ['Accrued Referral Partner Incentives', 310000],
-  ['Other Current Liabilities', 160000],
-  ['Long-Term Liabilities', 720000],
-  ['Total Liabilities', 1950000],
-  ['Contributed Capital', 600000],
-  ['Retained Earnings', 248000],
-  ['Current-Year Earnings', 1002000],
-  ['Total Equity', 1850000],
+// Mock balance sheet detail used until statement-level trial balance data is connected.
+// Totals balance exactly: Assets = Liabilities + Equity.
+export const balanceSheetStatement = {
+  current: {
+    cash: 1840000,
+    accountsReceivable: 940000,
+    otherCurrentAssets: 270000,
+    longTermAssets: 750000,
+    accountsPayable: 520000,
+    accruedLiabilities: 400000,
+    longTermLiabilities: 1030000,
+    contributedCapital: 600000,
+    retainedEarnings: 248000,
+    currentPeriodEarnings: 1002000,
+  },
+  prior: {
+    cash: 1690000,
+    accountsReceivable: 850000,
+    otherCurrentAssets: 245000,
+    longTermAssets: 710000,
+    accountsPayable: 560000,
+    accruedLiabilities: 360000,
+    longTermLiabilities: 990000,
+    contributedCapital: 600000,
+    retainedEarnings: 196000,
+    currentPeriodEarnings: 789000,
+  },
+};
+
+// Mock monthly balance sheet trend for finance statement review.
+export const balanceSheetTrend = [
+  { month: 'Jan', assets: 3230000, liabilities: 1790000, equity: 1440000, workingCapital: 1090000 },
+  { month: 'Feb', assets: 3380000, liabilities: 1845000, equity: 1535000, workingCapital: 1185000 },
+  { month: 'Mar', assets: 3560000, liabilities: 1880000, equity: 1680000, workingCapital: 1290000 },
+  { month: 'Apr', assets: 3630000, liabilities: 1905000, equity: 1725000, workingCapital: 1305000 },
+  { month: 'May', assets: 3720000, liabilities: 1915000, equity: 1805000, workingCapital: 1350000 },
+  { month: 'Jun', assets: 3800000, liabilities: 1950000, equity: 1850000, workingCapital: 1330000 },
 ];
 
 export const arApAging = [
@@ -248,11 +343,175 @@ export const vendors = [
 ];
 
 export const exceptions = [
-  ['Critical', 'FR-1215', 'Cedar Valley Farms', 'CRM Earned Revenue does not equal General Ledger revenue', 'Stage 2', 'Stage 2', '2026-05-19', 5000, '2026-06-30', 'Finance Ops', 'Open'],
-  ['High', 'FR-1164', 'Riverbend Land Group', 'Recognition-stage date missing', 'Stage 2', 'Stage 3', '', 98000, '2026-06-28', 'Reporting', 'In Review'],
-  ['High', 'FR-1266', 'Greenfield Ag Trust', 'Deal moved backward in the CRM process', 'Stage 2', 'Stage 1', '2026-05-06', 210000, '2026-06-25', 'Sales Ops', 'Open'],
-  ['Medium', 'FR-1304', 'Blue Stem Farms', 'Previously reported period changed', 'Stage 1', 'Stage 2', '2026-06-25', 69000, '2026-06-26', 'Controller', 'Resolved'],
-  ['Low', 'FR-1340', 'Lakeside Crop Systems', 'Missing acreage', 'Booked', 'Stage 1', '2026-06-11', 0, '2026-06-20', 'Revenue Ops', 'Dismissed'],
+  ['Critical', 'FR-1215', 'Cedar Valley Farms', 'CRM Earned Revenue does not equal General Ledger Revenue', 'Soil Data Collection Complete', 'Soil Data Collection Complete', '2026-05-19', 5000, '2026-06-30', 'Finance Ops', 'New'],
+  ['High', 'FR-1164', 'Riverbend Land Group', 'Recognition-stage date missing', 'Soil Data Collection Complete', 'Report Complete', '', 98000, '2026-06-28', 'Reporting', 'Investigating'],
+  ['High', 'FR-1266', 'Greenfield Ag Trust', 'Deal moved backward in the CRM process', 'Soil Data Collection Complete', 'Signed Agreement', '2026-05-06', 210000, '2026-06-25', 'Sales Ops', 'New'],
+  ['Medium', 'FR-1304', 'Blue Stem Farms', 'Previously reported period changed', 'Signed Agreement', 'Soil Data Collection Complete', '2026-06-25', 69000, '2026-06-26', 'Controller', 'Resolved'],
+  ['Low', 'FR-1340', 'Lakeside Crop Systems', 'Missing acreage', 'Book Sales', 'Signed Agreement', '2026-06-11', 0, '2026-06-20', 'Finance Ops', 'Accepted Exception'],
+];
+
+// Mock finance and revenue-recognition control exceptions for the Exception Reporting dashboard.
+export const controlExceptions = [
+  {
+    id: 'EX-1001',
+    exceptionType: 'Backward stage movement',
+    severity: 'Critical',
+    dealOrProject: 'FR-1266',
+    customer: 'Greenfield Ag Trust',
+    affectedStage: 'Paid Account back to an earlier stage',
+    affectedPeriod: '2026-05',
+    revenueImpact: 210000,
+    acresImpact: 21000,
+    sourceSystem: 'CRM',
+    detectedDate: '2026-06-25',
+    owner: 'Sales Ops',
+    status: 'New',
+    resolutionNotes: 'Validate stage history and freeze recognized amount pending controller review.',
+  },
+  {
+    id: 'EX-1002',
+    exceptionType: 'Missing revenue-recognition dates',
+    severity: 'High',
+    dealOrProject: 'FR-1164',
+    customer: 'Riverbend Land Group',
+    affectedStage: 'Missing report-complete date',
+    affectedPeriod: '2026-06',
+    revenueImpact: 98000,
+    acresImpact: 9800,
+    sourceSystem: 'Operations Workflow',
+    detectedDate: '2026-06-28',
+    owner: 'Reporting',
+    status: 'Investigating',
+    resolutionNotes: 'Operations team reviewing Report Complete evidence and timestamp.',
+  },
+  {
+    id: 'EX-1003',
+    exceptionType: 'CRM-to-General-Ledger mismatch',
+    severity: 'Critical',
+    dealOrProject: 'FR-1215',
+    customer: 'Cedar Valley Farms',
+    affectedStage: 'Soil Data Collection Complete',
+    affectedPeriod: '2026-05',
+    revenueImpact: 5000,
+    acresImpact: 0,
+    sourceSystem: 'CRM and General Ledger',
+    detectedDate: '2026-06-30',
+    owner: 'Finance Ops',
+    status: 'New',
+    resolutionNotes: 'General-ledger posting differs from operational Earned Revenue calculation.',
+  },
+  {
+    id: 'EX-1004',
+    exceptionType: 'Duplicate or repeated stage events',
+    severity: 'Medium',
+    dealOrProject: 'FR-1304',
+    customer: 'Blue Stem Farms',
+    affectedStage: 'Soil Data Collection Complete',
+    affectedPeriod: '2026-06',
+    revenueImpact: 69000,
+    acresImpact: 6900,
+    sourceSystem: 'CRM',
+    detectedDate: '2026-06-26',
+    owner: 'Controller',
+    status: 'Resolved',
+    resolutionNotes: 'Duplicate event suppressed from revenue-recognition feed.',
+  },
+  {
+    id: 'EX-1005',
+    exceptionType: 'Missing contract value',
+    severity: 'High',
+    dealOrProject: 'FR-1348',
+    customer: 'North Prairie Holdings',
+    affectedStage: 'Signed Agreement',
+    affectedPeriod: '2026-06',
+    revenueImpact: 0,
+    acresImpact: 12400,
+    sourceSystem: 'CRM',
+    detectedDate: '2026-06-29',
+    owner: 'Revenue Ops',
+    status: 'Investigating',
+    resolutionNotes: 'Contract value missing from signed agreement record.',
+  },
+  {
+    id: 'EX-1006',
+    exceptionType: 'Missing acres',
+    severity: 'Low',
+    dealOrProject: 'FR-1340',
+    customer: 'Lakeside Crop Systems',
+    affectedStage: 'Signed Agreement',
+    affectedPeriod: '2026-06',
+    revenueImpact: 0,
+    acresImpact: 0,
+    sourceSystem: 'CRM',
+    detectedDate: '2026-06-20',
+    owner: 'Finance Ops',
+    status: 'Accepted Exception',
+    resolutionNotes: 'Accepted for current close; acreage correction expected next period.',
+  },
+  {
+    id: 'EX-1007',
+    exceptionType: 'Missing invoice',
+    severity: 'Medium',
+    dealOrProject: 'FR-1088',
+    customer: 'North Fork Farms',
+    affectedStage: 'Report Complete',
+    affectedPeriod: '2026-04',
+    revenueImpact: 336000,
+    acresImpact: 11200,
+    sourceSystem: 'Billing',
+    detectedDate: '2026-06-18',
+    owner: 'Billing Ops',
+    status: 'Investigating',
+    resolutionNotes: 'Invoice record not found for fully recognized contract.',
+  },
+  {
+    id: 'EX-1008',
+    exceptionType: 'Reopened or reprocessed deal',
+    severity: 'High',
+    dealOrProject: 'FR-1120',
+    customer: 'Summit Ag Holdings',
+    affectedStage: 'Report Complete back to Analyst Team',
+    affectedPeriod: '2026-05',
+    revenueImpact: 267000,
+    acresImpact: 26700,
+    sourceSystem: 'Operations Workflow',
+    detectedDate: '2026-06-27',
+    owner: 'Revenue Ops',
+    status: 'New',
+    resolutionNotes: 'Deal reopened after Report Complete; determine whether prior recognition must be reversed.',
+  },
+  {
+    id: 'EX-1009',
+    exceptionType: 'Period-end change',
+    severity: 'Critical',
+    dealOrProject: 'FR-1042',
+    customer: 'Midwest Soil Cooperative',
+    affectedStage: 'Historical recognized amount changed after close',
+    affectedPeriod: '2026-03',
+    revenueImpact: 185000,
+    acresImpact: 18500,
+    sourceSystem: 'Revenue Recognition Model',
+    detectedDate: '2026-06-30',
+    owner: 'Controller',
+    status: 'Investigating',
+    resolutionNotes: 'Historical period amount changed after close; review financial statement impact.',
+  },
+  {
+    id: 'EX-1010',
+    exceptionType: 'Backward stage movement',
+    severity: 'Medium',
+    dealOrProject: 'FR-1352',
+    customer: 'Red River Ag Group',
+    affectedStage: 'Analyst Team back to Soil Team',
+    affectedPeriod: '2026-06',
+    revenueImpact: 76000,
+    acresImpact: 7600,
+    sourceSystem: 'Operations Workflow',
+    detectedDate: '2026-06-24',
+    owner: 'Operations',
+    status: 'Resolved',
+    resolutionNotes: 'Workflow correction did not affect recognized stage date.',
+  },
 ];
 
 export const formatMoney = (value: number) => {
@@ -261,6 +520,5 @@ export const formatMoney = (value: number) => {
   return value < 0 ? `(${formatted})` : formatted;
 };
 
-export const formatNumber = (value: number) => `${Number(value).toLocaleString()}`;
 export const earnedForFinanceDeal = earnedForDeal;
 export const stageAmountForFinanceDeal = stageAmount;

@@ -1,9 +1,14 @@
 import PowerBISlicer from './PowerBISlicer';
 
 export interface FinanceFilterValue {
-  reportingPeriod: string;
+  dateRange: string;
+  month: string;
+  quarter: string;
+  year: string;
   department: string;
   revenueSource: string;
+  referralPartner: string;
+  salesperson: string;
   comparisonPeriod: string;
 }
 
@@ -20,9 +25,9 @@ export default function FinanceSlicers({ filters, onFilterChange }: FinanceSlice
       </div>
 
       <PowerBISlicer
-        title="Reporting Period"
-        value={filters.reportingPeriod}
-        onChange={(value) => onFilterChange('reportingPeriod', value)}
+        title="Date Range"
+        value={filters.dateRange}
+        onChange={(value) => onFilterChange('dateRange', value)}
         options={[
           { value: 'thisMonth', label: 'This Month' },
           { value: 'lastMonth', label: 'Last Month' },
@@ -30,6 +35,44 @@ export default function FinanceSlicers({ filters, onFilterChange }: FinanceSlice
           { value: 'yearToDate', label: 'Year to Date' },
           { value: 'priorYear', label: 'Prior Year' },
           { value: 'custom', label: 'Custom' },
+        ]}
+      />
+
+      <PowerBISlicer
+        title="Month"
+        value={filters.month}
+        onChange={(value) => onFilterChange('month', value)}
+        options={[
+          { value: 'all', label: 'All Months' },
+          { value: 'jan', label: 'January' },
+          { value: 'feb', label: 'February' },
+          { value: 'mar', label: 'March' },
+          { value: 'apr', label: 'April' },
+          { value: 'may', label: 'May' },
+          { value: 'jun', label: 'June' },
+        ]}
+      />
+
+      <PowerBISlicer
+        title="Quarter"
+        value={filters.quarter}
+        onChange={(value) => onFilterChange('quarter', value)}
+        options={[
+          { value: 'all', label: 'All Quarters' },
+          { value: 'q1', label: 'Q1' },
+          { value: 'q2', label: 'Q2' },
+          { value: 'q3', label: 'Q3' },
+          { value: 'q4', label: 'Q4' },
+        ]}
+      />
+
+      <PowerBISlicer
+        title="Year"
+        value={filters.year}
+        onChange={(value) => onFilterChange('year', value)}
+        options={[
+          { value: '2026', label: '2026' },
+          { value: '2025', label: '2025' },
         ]}
       />
 
@@ -55,6 +98,32 @@ export default function FinanceSlicers({ filters, onFilterChange }: FinanceSlice
           { value: 'all', label: 'All Revenue Sources' },
           { value: 'directSales', label: 'Direct Sales' },
           { value: 'referralPartner', label: 'Referral Partner' },
+        ]}
+      />
+
+      <PowerBISlicer
+        title="Referral Partner"
+        value={filters.referralPartner}
+        onChange={(value) => onFilterChange('referralPartner', value)}
+        options={[
+          { value: 'all', label: 'All Referral Partners' },
+          { value: 'prairieGrowth', label: 'Prairie Growth Advisors' },
+          { value: 'harvestRidge', label: 'Harvest Ridge Partners' },
+          { value: 'dakotaLand', label: 'Dakota Land Network' },
+          { value: 'none', label: 'None' },
+        ]}
+      />
+
+      <PowerBISlicer
+        title="Salesperson"
+        value={filters.salesperson}
+        onChange={(value) => onFilterChange('salesperson', value)}
+        options={[
+          { value: 'all', label: 'All Salespeople' },
+          { value: 'sarahKeller', label: 'Sarah Keller' },
+          { value: 'marcusLee', label: 'Marcus Lee' },
+          { value: 'ninaPatel', label: 'Nina Patel' },
+          { value: 'direct', label: 'Direct' },
         ]}
       />
 

@@ -4,20 +4,23 @@ import FinanceSlicers, { type FinanceFilterValue } from './components/FinanceSli
 import {
   BalanceSheet,
   CashFlow,
-  ExceptionsReconciliation,
-  FinanceOverview,
+  ExceptionReporting,
+  ExecutiveSnapshot,
   IncomeStatement,
   RevenueRecognition,
-  ReferralPartnerFinancialPerformance,
-  SalesOverview,
 } from './pages/FinancePages';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('financeOverview');
+  const [activeTab, setActiveTab] = useState('executiveSnapshot');
   const [financeFilters, setFinanceFilters] = useState<FinanceFilterValue>({
-    reportingPeriod: 'yearToDate',
+    dateRange: 'yearToDate',
+    month: 'all',
+    quarter: 'all',
+    year: '2026',
     department: 'all',
     revenueSource: 'all',
+    referralPartner: 'all',
+    salesperson: 'all',
     comparisonPeriod: 'priorYear',
   });
 
@@ -27,31 +30,27 @@ export default function App() {
 
   const renderActivePage = () => {
     switch (activeTab) {
-      case 'financeOverview':
-        return <FinanceOverview />;
-      case 'salesOverview':
-        return <SalesOverview />;
-      case 'revenueRecognition':
-        return <RevenueRecognition />;
+      case 'executiveSnapshot':
+        return <ExecutiveSnapshot />;
       case 'incomeStatement':
         return <IncomeStatement />;
       case 'balanceSheet':
         return <BalanceSheet />;
       case 'cashFlow':
         return <CashFlow />;
-      case 'referralPartnerFinancialPerformance':
-        return <ReferralPartnerFinancialPerformance />;
-      case 'exceptionsReconciliation':
-        return <ExceptionsReconciliation />;
+      case 'revenueRecognition':
+        return <RevenueRecognition />;
+      case 'exceptionReporting':
+        return <ExceptionReporting />;
       default:
-        return <FinanceOverview />;
+        return <ExecutiveSnapshot />;
     }
   };
 
   return (
     <div className="h-screen flex flex-col bg-[#E6EEE7]">
       {/* Power BI Header */}
-      <div className="flex-shrink-0 bg-[#006637] text-white px-6 py-3 flex items-center justify-between">
+      <div className="app-chrome flex-shrink-0 bg-[#006637] text-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#7BBD5C] flex items-center justify-center">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -75,15 +74,17 @@ export default function App() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex-shrink-0">
+      {/* Power BI implementation metadata: page navigator or buttons with page-navigation actions. */}
+      <div className="app-chrome flex-shrink-0">
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      {/* Main Content Area with Sidebar */}
+      {/* Power BI implementation metadata: global slicer pane using synchronized native slicers. */}
       <div className="flex flex-1 min-h-0">
         {/* Global Slicers Sidebar */}
-        <FinanceSlicers filters={financeFilters} onFilterChange={handleFinanceFilterChange} />
+        <div className="app-chrome">
+          <FinanceSlicers filters={financeFilters} onFilterChange={handleFinanceFilterChange} />
+        </div>
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto">

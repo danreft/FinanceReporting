@@ -4,14 +4,12 @@ interface TabNavigationProps {
 }
 
 const tabs = [
-  { id: 'financeOverview', label: 'Executive Finance Overview' },
-  { id: 'salesOverview', label: 'Sales Overview' },
-  { id: 'revenueRecognition', label: 'Revenue Recognition' },
+  { id: 'executiveSnapshot', label: 'Executive Snapshot' },
   { id: 'incomeStatement', label: 'Income Statement' },
   { id: 'balanceSheet', label: 'Balance Sheet' },
-  { id: 'cashFlow', label: 'Statement of Cash Flows' },
-  { id: 'referralPartnerFinancialPerformance', label: 'Referral Partner Financial Performance' },
-  { id: 'exceptionsReconciliation', label: 'Exceptions & Reconciliation' },
+  { id: 'cashFlow', label: 'Cash Flow' },
+  { id: 'revenueRecognition', label: 'Revenue Recognition' },
+  { id: 'exceptionReporting', label: 'Exception Reporting' },
 ];
 
 export default function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
