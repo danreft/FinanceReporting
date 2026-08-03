@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Copy, ExternalLink, FileDown, FileText, Printer } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -43,57 +42,6 @@ import {
 
 const COLORS = ['#234E2A', '#358540', '#90B75D', '#56708F', '#D5741C'];
 
-const exportDate = () => new Date().toISOString().slice(0, 10);
-const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-function dashboardFileName(title: string, selectedPeriod: string, extension: string) {
-  return `${slug(title)}-${slug(selectedPeriod)}-${exportDate()}.${extension}`;
-}
-
-function DashboardActions({
-  title,
-  selectedPeriod,
-  exportContext,
-}: {
-  title: string;
-  selectedPeriod: string;
-  exportContext: string;
-}) {
-  const exportBody = [
-    title,
-    `Selected Period: ${selectedPeriod}`,
-    `Export Date: ${exportDate()}`,
-    '',
-    exportContext,
-  ].join('\n');
-  const actionClass = 'px-2 py-1 text-xs font-semibold bg-[#E6EEE7] text-[#006637] flex items-center gap-1';
-  const fileBase = dashboardFileName(title, selectedPeriod, '').replace(/\.$/, '');
-
-  const copyTable = async () => {
-    await navigator.clipboard?.writeText(exportBody);
-  };
-
-  return (
-    <div className="dashboard-actions flex flex-wrap justify-end gap-2">
-      <button type="button" onClick={copyTable} className={actionClass} style={{ fontFamily: 'Source Sans 3, sans-serif' }} title={`Power BI Export Data: ${fileBase}.csv`}>
-        <FileDown className="w-3.5 h-3.5" /> Export Data
-      </button>
-      <button type="button" onClick={() => window.print()} className={actionClass} style={{ fontFamily: 'Source Sans 3, sans-serif' }} title={`Power BI Export to PDF: ${fileBase}.pdf`}>
-        <FileText className="w-3.5 h-3.5" /> Export to PDF
-      </button>
-      <button type="button" onClick={() => window.print()} className={actionClass} style={{ fontFamily: 'Source Sans 3, sans-serif' }} title="Power BI Print Report">
-        <Printer className="w-3.5 h-3.5" /> Print Report
-      </button>
-      <button type="button" onClick={copyTable} className={actionClass} style={{ fontFamily: 'Source Sans 3, sans-serif' }} title="Power BI Copy Table">
-        <Copy className="w-3.5 h-3.5" /> Copy Table
-      </button>
-      <button type="button" onClick={copyTable} className={actionClass} style={{ fontFamily: 'Source Sans 3, sans-serif' }} title="Power BI drillthrough or paginated detail report">
-        <ExternalLink className="w-3.5 h-3.5" /> View Detailed Report
-      </button>
-    </div>
-  );
-}
-
 function PageShell({
   title,
   children,
@@ -112,13 +60,6 @@ function PageShell({
         <div>
           <div className="text-lg font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
           <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>Selected Period: {selectedPeriod}</div>
-          <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>Finance Reporting mockup for CFO requirements review</div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="px-2 py-1 text-xs rounded font-semibold bg-[#56708F] text-white" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
-            Illustrative Data
-          </span>
-          <DashboardActions title={title} selectedPeriod={selectedPeriod} exportContext={exportContext ?? `${title} dashboard export package.`} />
         </div>
       </div>
       {children}
@@ -145,9 +86,11 @@ function ChartCard({ title, subtitle, height = 280, children }: { title: string;
 // Recommended visual: native table or matrix visual.
 // Approach: use matrix for financial statements and table for detail; wide audit/detail outputs are paginated report candidates.
 // Interaction: native sort/filter, conditional formatting, and drillthrough; no editable grid behavior.
-function FinanceTable({ columns, rows }: { columns: string[]; rows: (string | number)[][] }) {
+function FinanceTable({ title, subtitle, columns, rows }: { title: string; subtitle?: string; columns: string[]; rows: (string | number)[][] }) {
   return (
     <div className="print-section bg-white border border-[#CFD5D0] p-4 overflow-x-auto">
+      <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
+      {subtitle && <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
       <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
         <thead>
           <tr className="border-b border-[#CFD5D0]">
@@ -174,7 +117,7 @@ function FinanceTable({ columns, rows }: { columns: string[]; rows: (string | nu
 
 function renderCell(cell: string | number, column = '') {
   if (typeof cell === 'number') {
-    if (/acres/i.test(column)) return `${formatAcres(cell)} Acres`;
+    if (/acres/i.test(column)) return formatAcres(cell);
     if (/contract count|contracts|records|unmatched/i.test(column)) return formatCount(cell);
     return cell > 999 || cell < 0 ? formatMoney(cell) : cell.toLocaleString();
   }
@@ -235,10 +178,14 @@ function varianceTone(value: number) {
 }
 
 function ProfitAndLossTable({
+  title,
+  subtitle,
   rows,
   expandedRows,
   onToggle,
 }: {
+  title: string;
+  subtitle?: string;
   rows: ProfitAndLossRow[];
   expandedRows: Set<string>;
   onToggle: (rowId: string) => void;
@@ -282,6 +229,8 @@ function ProfitAndLossTable({
 
   return (
     <div className="bg-white border border-[#CFD5D0] p-4 overflow-x-auto">
+      <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
+      {subtitle && <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
       <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
         <thead>
           <tr className="border-b border-[#CFD5D0]">
@@ -299,10 +248,14 @@ function ProfitAndLossTable({
 }
 
 function BalanceSheetStatementTable({
+  title,
+  subtitle,
   rows,
   expandedRows,
   onToggle,
 }: {
+  title: string;
+  subtitle?: string;
   rows: StatementRow[];
   expandedRows: Set<string>;
   onToggle: (rowId: string) => void;
@@ -344,6 +297,8 @@ function BalanceSheetStatementTable({
 
   return (
     <div className="bg-white border border-[#CFD5D0] p-4 overflow-x-auto">
+      <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
+      {subtitle && <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
       <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
         <thead>
           <tr className="border-b border-[#CFD5D0]">
@@ -425,11 +380,11 @@ export function ExecutiveSnapshot() {
         </ChartCard>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable columns={['Revenue and Expense Totals', 'Current Period', 'Prior Period', 'Variance']} rows={[
+        <FinanceTable title="Revenue and Expense Totals" subtitle="Current period totals compared with prior period" columns={['Revenue and Expense Totals', 'Current Period', 'Prior Period', 'Variance']} rows={[
           ['Total Earned Revenue', trendTotals.earnedRevenue, trendTotals.priorEarnedRevenue, trendTotals.earnedRevenue - trendTotals.priorEarnedRevenue],
           ['Total Expenses', trendTotals.expenses, trendTotals.priorExpenses, trendTotals.expenses - trendTotals.priorExpenses],
         ]} />
-        <FinanceTable columns={['Cash Flow Outlook', 'Amount']} rows={cashFlowOutlook} />
+        <FinanceTable title="Cash Flow Outlook Detail" subtitle="Beginning cash, expected inflows, expected outflows, and projected ending cash" columns={['Cash Flow Outlook', 'Amount']} rows={cashFlowOutlook} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <ChartCard title="AR and AP Summary" subtitle="Current, overdue, and upcoming balances">
@@ -454,8 +409,8 @@ export function ExecutiveSnapshot() {
         </ChartCard>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable columns={['Rank', 'Customer', 'Total Sales or Revenue', 'Acres', 'Contract Count', '% of Total']} rows={topCustomers} />
-        <FinanceTable columns={['Rank', 'Vendor', 'Total Expense', '% of Total']} rows={topVendors} />
+        <FinanceTable title="Top 10 Customers" subtitle="Ranked by total sales or revenue contribution" columns={['Rank', 'Customer', 'Total Sales or Revenue', 'Acres', 'Contract Count', '% of Total']} rows={topCustomers} />
+        <FinanceTable title="Top 10 Vendors" subtitle="Ranked by total expense contribution" columns={['Rank', 'Vendor', 'Total Expense', '% of Total']} rows={topVendors} />
       </div>
       <div className="bg-white border border-[#CFD5D0] p-4">
         <PowerBISlicer title="Process Metric" value={processMetric} onChange={(value) => setProcessMetric(value as MetricMode)} options={[{ value: 'dollars', label: 'Dollars' }, { value: 'acres', label: 'Acres' }, { value: 'contracts', label: 'Contracts' }]} />
@@ -470,7 +425,7 @@ export function ExecutiveSnapshot() {
             <Bar dataKey="value" fill="#358540" name={metricLabel(processMetric)} />
           </BarChart>
         </ChartCard>
-        <FinanceTable columns={['Metric', 'Dollars', 'Acres', 'Contract Count', 'Business Process Stage']} rows={processComparison} />
+        <FinanceTable title="Business Process Stage Comparison" subtitle="Book Sales, Earned Revenue, and Final Sales shown as separate business stages" columns={['Metric', 'Dollars', 'Acres', 'Contract Count', 'Business Process Stage']} rows={processComparison} />
       </div>
     </PageShell>
   );
@@ -589,7 +544,7 @@ export function IncomeStatement() {
           <PowerBISlicer title="Expense View" value={expenseView} onChange={setExpenseView} options={[{ value: 'total', label: 'Total' }, { value: 'department', label: 'Department' }, { value: 'category', label: 'Expense Category' }]} />
         </div>
       </div>
-      <ProfitAndLossTable rows={profitAndLossRows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
+      <ProfitAndLossTable title="Income Statement Matrix" subtitle="Expandable account hierarchy with current, prior, variance, and YTD values" rows={profitAndLossRows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
       <div className="grid grid-cols-3 gap-3">
         <ChartCard title="Rolling 12-Month Revenue" subtitle="Trailing financial statement revenue trend" height={240}>
           <LineChart data={rollingProfitAndLoss} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
@@ -789,12 +744,12 @@ export function RevenueRecognition() {
             </BarChart>
           </ChartCard>
         ) : (
-          <FinanceTable columns={['Period', `Signed Agreement ${metricLabel(recognitionMetric)}`, `Soil Data Collection Complete ${metricLabel(recognitionMetric)}`, `Report Complete ${metricLabel(recognitionMetric)}`, `Total ${metricLabel(recognitionMetric)}`]} rows={periodRows} />
+          <FinanceTable title="Earned Revenue by Stage and Period Table" subtitle={`Period totals by approved stage and selected ${metricLabel(recognitionMetric).toLowerCase()} metric`} columns={['Period', `Signed Agreement ${metricLabel(recognitionMetric)}`, `Soil Data Collection Complete ${metricLabel(recognitionMetric)}`, `Report Complete ${metricLabel(recognitionMetric)}`, `Total ${metricLabel(recognitionMetric)}`]} rows={periodRows} />
         )}
-        <FinanceTable columns={['Earned Revenue Stage', 'Revenue', 'Acres', 'Contract Count', '% of Total']} rows={visibleStageRows} />
+        <FinanceTable title="Earned Revenue by Stage" subtitle="Stage-level revenue, acres, contracts, and percentage of total" columns={['Earned Revenue Stage', 'Revenue', 'Acres', 'Contract Count', '% of Total']} rows={visibleStageRows} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable columns={['Period Comparison', metricLabel(recognitionMetric)]} rows={[
+        <FinanceTable title="Period Comparison" subtitle={`Current period compared with prior period by ${metricLabel(recognitionMetric).toLowerCase()}`} columns={['Period Comparison', metricLabel(recognitionMetric)]} rows={[
           [`Current Period ${metricLabel(recognitionMetric)}`, currentPeriodMetric],
           [`Prior Period ${metricLabel(recognitionMetric)}`, priorPeriodMetric],
           [`${metricLabel(recognitionMetric)} Variance`, periodMetricVariance],
@@ -813,16 +768,16 @@ export function RevenueRecognition() {
         </ChartCard>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable columns={['Reconciliation Summary', 'Value']} rows={[
+        <FinanceTable title="Reconciliation Summary" subtitle="Operational Earned Revenue reconciled to general-ledger revenue" columns={['Reconciliation Summary', 'Value']} rows={[
           ['CRM or Operational Earned Revenue', crmEarnedRevenue],
           ['General-Ledger Revenue', generalLedgerRevenue],
           ['Variance', reconciliationVariance],
           ['Unmatched Records', unmatchedRecords],
           ['Last Reconciliation Date', '2026-06-30'],
         ]} />
-        <FinanceTable columns={['Audit Indicator', 'Records', 'Financial Exposure', 'Status']} rows={auditIndicators} />
+        <FinanceTable title="Audit Indicators" subtitle="Control checks for missing data, reversals, duplicates, and GL mismatches" columns={['Audit Indicator', 'Records', 'Financial Exposure', 'Status']} rows={auditIndicators} />
       </div>
-      <FinanceTable columns={['Deal or Project', 'Customer', 'Contract', 'Total Contract Value', 'Acres', 'Signed Agreement Date', 'Signed Agreement Amount', 'Soil Data Collection Complete Date', 'Soil Data Collection Complete Amount', 'Report Complete Date', 'Report Complete Amount', 'Total Earned Revenue', 'General-Ledger Amount', 'Reconciliation Status']} rows={rows} />
+      <FinanceTable title="Detailed Audit Table" subtitle="Contract-level traceability for stage dates, stage amounts, and GL reconciliation" columns={['Deal or Project', 'Customer', 'Contract', 'Total Contract Value', 'Acres', 'Signed Agreement Date', 'Signed Agreement Amount', 'Soil Data Collection Complete Date', 'Soil Data Collection Complete Amount', 'Report Complete Date', 'Report Complete Amount', 'Total Earned Revenue', 'General-Ledger Amount', 'Reconciliation Status']} rows={rows} />
     </PageShell>
   );
 }
@@ -921,9 +876,9 @@ export function BalanceSheet() {
         <PowerBICard title="Current Ratio" value={currentRatio.toFixed(2)} variance={`${(currentRatio - priorCurrentRatio).toFixed(2)}`} status={currentRatio >= priorCurrentRatio ? 'positive' : 'negative'} subtitle="Current Assets / Current Liabilities" tooltip="Liquidity ratio comparing current assets to current liabilities." />
         <PowerBICard title="Cash Balance" value={formatMoney(balanceSheetStatement.current.cash)} variance={formatMoney(balanceSheetStatement.current.cash - balanceSheetStatement.prior.cash)} status={balanceSheetStatement.current.cash >= balanceSheetStatement.prior.cash ? 'positive' : 'negative'} subtitle="Cash and Cash Equivalents" tooltip="Cash and cash equivalents at period end." />
       </div>
-      <BalanceSheetStatementTable rows={rows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
+      <BalanceSheetStatementTable title="Balance Sheet Matrix" subtitle="Expandable Assets, Liabilities, and Equity hierarchy with period variance" rows={rows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable columns={['AR and AP Relationship', 'Amount']} rows={[
+        <FinanceTable title="AR and AP Relationship" subtitle="Open receivables and payables contributing to working capital" columns={['AR and AP Relationship', 'Amount']} rows={[
           ['Total AR', balanceSheetStatement.current.accountsReceivable],
           ['Total AP', balanceSheetStatement.current.accountsPayable],
           ['Net Working-Capital Impact', netWorkingCapitalImpact],
@@ -1022,10 +977,10 @@ export function CashFlow() {
           <PowerBISlicer title="Cash-Flow Category" value={cashFlowCategoryFilter} onChange={setCashFlowCategoryFilter} options={[{ value: 'all', label: 'All Categories' }, { value: 'operating', label: 'Operating Activities' }, { value: 'investing', label: 'Investing Activities' }, { value: 'financing', label: 'Financing Activities' }]} />
         </div>
       </div>
-      <FinanceTable columns={['Cash Flow Statement', 'Actual Amount']} rows={cashFlowStatementRows} />
+      <FinanceTable title="Cash Flow Statement Matrix" subtitle="Operating, investing, and financing activities with cash balance rollforward" columns={['Cash Flow Statement', 'Actual Amount']} rows={cashFlowStatementRows} />
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable columns={['Cash Flow Outlook', 'Forecast Amount']} rows={cashFlowOutlookDetail} />
-        <FinanceTable columns={['Variance View', 'Actual', 'Forecast', 'Variance', 'Variance Percent']} rows={varianceRows} />
+        <FinanceTable title="Cash Flow Outlook" subtitle="Forecast inflows, outflows, and projected ending cash" columns={['Cash Flow Outlook', 'Forecast Amount']} rows={cashFlowOutlookDetail} />
+        <FinanceTable title="Variance View" subtitle="Actual cash movement compared with forecast" columns={['Variance View', 'Actual', 'Forecast', 'Variance', 'Variance Percent']} rows={varianceRows} />
       </div>
       <div className="grid grid-cols-3 gap-3">
         <ChartCard title="Monthly Operating Cash Flow" subtitle="Actuals compared with forecast" height={240}>
@@ -1195,7 +1150,7 @@ export function ExceptionReporting() {
                   <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{item.affectedStage}</td>
                   <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{item.affectedPeriod}</td>
                   <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{formatMoney(item.revenueImpact)}</td>
-                  <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{formatAcres(item.acresImpact)} Acres</td>
+                  <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{formatAcres(item.acresImpact)}</td>
                   <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{item.sourceSystem}</td>
                   <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{item.detectedDate}</td>
                   <td className="py-2 pr-3 text-[#1A1A1A] whitespace-nowrap">{item.owner}</td>

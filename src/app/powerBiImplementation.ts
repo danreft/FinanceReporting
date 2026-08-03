@@ -32,16 +32,6 @@ export const powerBIImplementationMetadata: PowerBIImplementationMetadata[] = [
   },
   {
     page: 'All Dashboards',
-    element: 'Dashboard header actions',
-    recommendedVisual: 'Power BI buttons',
-    implementationApproach: 'Buttons invoke Export data, Export to PDF, Print report, Copy table, or drillthrough/detail report patterns.',
-    requiredMeasures: [],
-    expectedInteraction: 'Power BI service export, print, or drillthrough action',
-    knownLimitation: 'Prototype uses clipboard/print stubs where Power BI service handles the actual export.',
-    replicabilityStatus: 'Fully Replicable',
-  },
-  {
-    page: 'All Dashboards',
     element: 'Global and page slicers',
     recommendedVisual: 'Native slicers',
     implementationApproach: 'Dropdown, list, date, relative-date, and field-parameter slicers with synchronized date and org filters.',

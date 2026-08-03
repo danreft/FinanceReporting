@@ -7,7 +7,7 @@ This mockup validates Finance Reporting requirements before implementation in Mi
 - Canvas: 16:9 report pages, approximately 1280 x 720.
 - Theme: green finance theme using Power BI theme colors, white visual backgrounds, subtle borders, consistent title text, and Source Sans-style body text where available.
 - Navigation: Power BI page navigator or button navigation for exactly six pages: Executive Snapshot, Income Statement, Balance Sheet, Cash Flow, Revenue Recognition, Exception Reporting.
-- Export actions: Power BI Export data, Export to PDF, Print report, Copy table, and drillthrough/detail report access.
+- Export handling: use standard Power BI service export, print, and drillthrough/detail capabilities outside the report header chrome.
 - Synchronized slicers: Date Range, Month, Quarter, Year, Department, Revenue Source, Referral Partner, Salesperson, and Comparison Period should sync where the page supports the field.
 - Field parameter: Dollars, Acres, and Contracts should be implemented as a Power BI field parameter or disconnected metric selector table.
 - Detail records: large audit and exception tables should use drillthrough pages or paginated reports instead of web drawers or custom modals.
@@ -139,7 +139,6 @@ This mockup validates Finance Reporting requirements before implementation in Mi
 | Mockup Page | Mockup Element | Business Purpose | Recommended Power BI Visual | Native or Custom | Required Interaction | Required Measure | Implementation Notes | Replicability Status |
 |---|---|---|---|---|---|---|---|---|
 | All | Page navigation | Move between six dashboards | Page navigator/buttons | Native | Page navigation | None | Match tab labels exactly | Fully Replicable |
-| All | Header actions | Export, print, copy, detail access | Buttons | Native | Export data/PDF/print/drillthrough | None | Use Power BI service actions | Fully Replicable |
 | All | Global slicers | Shared finance filtering | Slicers | Native | Sync slicers | Date, department, source filters | Sync common slicers across pages | Fully Replicable |
 | Executive Snapshot | KPI row | Executive finance summary | Card/KPI visuals | Native | Tooltip and slicers | Book Sales, Earned Revenue, Final Sales, FCF, AR, AP | Conditional formatting for status | Fully Replicable |
 | Executive Snapshot | Revenue and Expense Trend | Period-over-period view | Clustered column chart | Native | Cross-filtering | Earned Revenue, Expenses, Prior Period | Include variance tooltip | Fully Replicable |
