@@ -13,7 +13,10 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState('executiveSnapshot');
   const [financeFilters, setFinanceFilters] = useState<FinanceFilterValue>({
-    dateRange: 'yearToDate',
+    reportingPeriod: 'currentMonth',
+    revenueSource: 'allSources',
+    customStart: '2026-06-01',
+    customEnd: '2026-06-30',
   });
 
   const handleFinanceFilterChange = (filterName: keyof FinanceFilterValue, value: FinanceFilterValue[keyof FinanceFilterValue]) => {
@@ -23,24 +26,24 @@ export default function App() {
   const renderActivePage = () => {
     switch (activeTab) {
       case 'executiveSnapshot':
-        return <ExecutiveSnapshot dateRange={financeFilters.dateRange} />;
+        return <ExecutiveSnapshot filters={financeFilters} />;
       case 'incomeStatement':
-        return <IncomeStatement dateRange={financeFilters.dateRange} />;
+        return <IncomeStatement filters={financeFilters} />;
       case 'balanceSheet':
-        return <BalanceSheet dateRange={financeFilters.dateRange} />;
+        return <BalanceSheet filters={financeFilters} />;
       case 'cashFlow':
-        return <CashFlow dateRange={financeFilters.dateRange} />;
+        return <CashFlow filters={financeFilters} />;
       case 'revenueRecognition':
-        return <RevenueRecognition dateRange={financeFilters.dateRange} />;
+        return <RevenueRecognition filters={financeFilters} />;
       case 'exceptionReporting':
-        return <ExceptionReporting dateRange={financeFilters.dateRange} />;
+        return <ExceptionReporting filters={financeFilters} />;
       default:
-        return <ExecutiveSnapshot dateRange={financeFilters.dateRange} />;
+        return <ExecutiveSnapshot filters={financeFilters} />;
     }
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#E6EEE7]">
+    <div className="h-screen flex flex-col bg-[#F3F4F6]">
       {/* Power BI Header */}
       <div className="app-chrome flex-shrink-0 bg-[#006637] text-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -60,9 +63,6 @@ export default function App() {
           <div className="text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
             Last Refreshed: Apr 24, 2026, 8:15 AM
           </div>
-          <div className="text-xs opacity-80" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
-            Data Source: Finance Reporting Data Model
-          </div>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export default function App() {
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      {/* Power BI implementation metadata: global slicer pane using synchronized native slicers. */}
+      {/* Power BI implementation metadata: global Reporting Period and Revenue Source slicers use synchronized native dropdown slicers. Custom uses a bookmarked Between Date slicer shown only for Custom. */}
       <div className="flex flex-1 min-h-0">
         {/* Global Slicers Sidebar */}
         <div className="app-chrome">

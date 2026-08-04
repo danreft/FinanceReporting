@@ -11,8 +11,9 @@ This document separates confirmed Finance Reporting requirements from mockup ass
   - Cash Flow
   - Revenue Recognition
   - Exception Reporting
-- Support date or reporting-period selection.
-- Support source analysis using All Sources, RP-Sourced, and Direct-Sourced.
+- Support a shared Reporting Period selection using Current Month, Previous Month, Current Quarter, Previous Quarter, Year to Date (YTD), Previous Year to Date, Current Fiscal Year, Previous Fiscal Year, Rolling 12 Months, and Custom.
+- Support Custom reporting-period selection with a standard Between Date slicer shown only when Custom is selected.
+- Support source analysis using a shared Revenue Source selector with All Sources, RP-Sourced, and Direct-Sourced.
 - Include chart and table views where explicitly needed for the approved report.
 - Support PDF-compatible presentation output and standard Power BI Export Data where appropriate.
 - Keep primary pages compatible with a Power BI 16:9 report canvas.

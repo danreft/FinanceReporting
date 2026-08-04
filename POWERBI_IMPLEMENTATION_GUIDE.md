@@ -11,7 +11,7 @@ For requirements authority and validation status, see `FINANCE_REPORTING_REQUIRE
 - Desktop layout: each primary page uses a fixed 16:9 report canvas and should not rely on vertical webpage scrolling.
 - Navigation: Power BI page navigator or button navigation for exactly six pages: Executive Snapshot, Income Statement, Balance Sheet, Cash Flow, Revenue Recognition, Exception Reporting.
 - Export handling: use standard Power BI service export, print, and drillthrough/detail capabilities outside the report header chrome.
-- Synchronized slicers and filter pane: keep only primary review slicers visible on each page. Date Range, Month, Quarter, Year, Department, Source, RP or RPM, Exception Type, Customer, Source System, and Revenue Recognition Stage should sync where the page supports the field, with secondary filters placed in the Power BI filter pane.
+- Synchronized slicers and filter pane: the shared header contains Reporting Period and Revenue Source dropdown slicers synced across all six pages. Reporting Period options are Current Month, Previous Month, Current Quarter, Previous Quarter, Year to Date (YTD), Previous Year to Date, Current Fiscal Year, Previous Fiscal Year, Rolling 12 Months, and Custom. When Custom is selected, show a standard Between Date slicer beneath Reporting Period; hide it for all other periods. Department, account, customer, source-system, RP/RPM, Exception Type, and Revenue Recognition Stage filters remain page controls or filter pane fields where supported.
 - Field parameter: Dollars, Acres, and Contracts should be implemented as a Power BI field parameter or disconnected metric selector table.
 - Detail records: large audit and exception tables should use drillthrough pages or paginated reports instead of web drawers or custom modals.
 
@@ -31,7 +31,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 ### Executive Snapshot
 
 - Page purpose: CFO overview of Booked Sales, Earned Revenue, Final Sales, cash, AR, AP, customer, and vendor position.
-- Required visible slicers: reporting period.
+- Required visible slicers: shared header Reporting Period and Revenue Source.
 - Filter pane fields: department, source, customer, vendor, and RP/RPM where supported.
 - KPI visuals: Booked Sales, Earned Revenue, Final Sales, Free Cash Flow, Accounts Receivable, Accounts Payable.
 - Chart types: clustered column chart for Earned Revenue and Expense Trend; tables for illustrative Basic Cash Outlook, AR/AP Relationship, and Booked Sales/Earned Revenue/Final Sales comparison.
@@ -51,7 +51,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 ### Income Statement
 
 - Page purpose: finance-oriented profit and loss statement.
-- Required visible slicers: none beyond the shared Reporting Period control.
+- Required visible slicers: none beyond the shared header Reporting Period and Revenue Source controls.
 - Filter pane fields: date, period, department, source, and account where supported.
 - KPI visuals: Total Revenue, Total Expenses, Operating Income, Net Income.
 - Chart types: compact line chart for Earned Revenue and Expense Trend using GAAP Earned Revenue and expenses.
@@ -73,7 +73,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 ### Balance Sheet
 
 - Page purpose: financial position statement with AR/AP relationship and balance validation.
-- Required visible slicers: none beyond the shared Reporting Period control.
+- Required visible slicers: none beyond the shared header Reporting Period and Revenue Source controls.
 - Filter pane fields: date, period, and account where supported.
 - KPI visuals: Total Assets, Total Liabilities, Total Equity, Cash Balance.
 - Chart types: none for the simplified Balance Sheet page.
@@ -93,7 +93,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 ### Cash Flow
 
 - Page purpose: cash flow statement, free cash flow, basic cash outlook, and period comparison.
-- Required visible slicers: none beyond the shared Reporting Period control.
+- Required visible slicers: none beyond the shared header Reporting Period and Revenue Source controls.
 - Filter pane fields: date and account where supported.
 - KPI visuals: Ending Cash, Net Change in Cash, Free Cash Flow.
 - Chart types: line chart for free cash flow trend.
@@ -114,7 +114,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 
 - Page purpose: Earned Revenue reporting for the three approved stages: Signed Agreement, Soil Data Collection Complete, and Report Complete.
 - Business definition: Earned Revenue is GAAP-compliant revenue recognized when each applicable stage is completed.
-- Required visible slicers: Recognition Period, Recognition Stage, Metric, and Chart/Table view.
+- Required visible slicers: shared header Reporting Period and Revenue Source, plus page-level Recognition Stage, Metric, and Chart/Table view controls. Do not add a separate Recognition Period slicer on the page.
 - Filter pane fields: recognition period/date, customer, source, and reconciliation result where applicable.
 - KPI visuals: Total Earned Revenue, Stage 1 Earned Revenue, Stage 2 Earned Revenue, Stage 3 Earned Revenue, Recognized Acres.
 - Chart types: chart/table selector for monthly stage reporting using standard Power BI visuals.
@@ -136,7 +136,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 
 - Page purpose: read-only monitoring of revenue recognition and financial data exceptions.
 - Required exception types: Backward Stage Movement, Missing Stage Date, CRM or Operational-to-General-Ledger Mismatch, Historical-Period Change.
-- Required visible slicers: Reporting Period and Exception Type.
+- Required visible slicers: shared header Reporting Period and Revenue Source, plus page-level Exception Type.
 - Filter pane fields: customer and source system where applicable.
 - KPI visuals: Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes.
 - Chart types: none in the simplified Exception Reporting page.
@@ -158,7 +158,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 | Mockup Page | Mockup Element | Business Purpose | Recommended Power BI Visual | Native or Custom | Required Interaction | Required Measure | Implementation Notes | Replicability Status |
 |---|---|---|---|---|---|---|---|---|
 | All | Page navigation | Move between six pages | Page navigator/buttons | Native | Page navigation | None | Match tab labels exactly | Fully Replicable |
-| All | Global slicer and filter pane | Shared finance filtering | Slicer plus filter pane fields | Native | Sync slicers and filter pane | Reporting Period plus secondary filters | Keep secondary filters off canvas where possible | Fully Replicable |
+| All | Shared header slicers and filter pane | Shared finance filtering | Dropdown slicers plus conditional Between Date slicer | Native | Sync slicers, bookmarks, and filter pane | Reporting Period and Revenue Source plus secondary filters | Reporting Period and Revenue Source stay in the header; Custom shows a native Between Date slicer beneath Reporting Period only | Fully Replicable |
 | Executive Snapshot | KPI row | Executive finance summary | Card/KPI visuals | Native | Tooltip and slicers | Booked Sales, Earned Revenue, Final Sales, FCF, AR, AP | Conditional variance formatting | Fully Replicable |
 | Executive Snapshot | Earned Revenue and Expense Trend | Period-over-period view | Clustered column chart | Native | Cross-filtering | Earned Revenue, Expenses, Prior Period | Include variance tooltip | Fully Replicable |
 | Executive Snapshot | Basic Cash Outlook | Illustrative cash outlook | Table visual | Native | Tooltip | Current Cash, Expected Customer Collections, Expected Near-Term Payments, Projected Cash | Illustrative pending Finance confirmation; no forecast model or assumption controls | Fully Replicable |

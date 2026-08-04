@@ -31,41 +31,69 @@ import {
   stageAmountForFinanceDeal,
   vendors,
 } from '../data/financeMockData';
-import type { ReportingDateRange } from '../components/FinanceSlicers';
+import type { FinanceFilterValue, ReportingDateRange } from '../components/FinanceSlicers';
 
 type FinancePageProps = {
-  dateRange: ReportingDateRange;
+  filters: FinanceFilterValue;
 };
 
 const dateRangeLabels: Record<ReportingDateRange, string> = {
-  thisMonth: 'June 2026',
-  lastMonth: 'May 2026',
-  thisQuarter: 'Q2 2026',
-  yearToDate: 'YTD 2026',
+  currentMonth: 'Current Month',
+  previousMonth: 'Previous Month',
+  currentQuarter: 'Current Quarter',
+  previousQuarter: 'Previous Quarter',
+  yearToDate: 'Year to Date (YTD)',
+  previousYearToDate: 'Previous Year to Date',
+  currentFiscalYear: 'Current Fiscal Year',
+  previousFiscalYear: 'Previous Fiscal Year',
+  rolling12Months: 'Rolling 12 Months',
+  custom: 'Custom',
 };
 
 const dateRangeMonths: Record<ReportingDateRange, string[]> = {
-  thisMonth: ['Jun'],
-  lastMonth: ['May'],
-  thisQuarter: ['Apr', 'May', 'Jun'],
+  currentMonth: ['Jun'],
+  previousMonth: ['May'],
+  currentQuarter: ['Apr', 'May', 'Jun'],
+  previousQuarter: ['Jan', 'Feb', 'Mar'],
   yearToDate: months,
+  previousYearToDate: months,
+  currentFiscalYear: months,
+  previousFiscalYear: months,
+  rolling12Months: months,
+  custom: ['Jun'],
 };
 
-const selectedMonthsFor = (dateRange: ReportingDateRange) => dateRangeMonths[dateRange];
-const selectedPeriodLabel = (dateRange: ReportingDateRange) => dateRangeLabels[dateRange];
+const monthIsoFor = (month: string) => `2026-${String(months.indexOf(month) + 1).padStart(2, '0')}`;
+const formatCustomPeriod = (start: string, end: string) => {
+  if (!start || !end) return 'Custom';
+  return `${start} to ${end}`;
+};
+const customMonthsFor = (filters: FinanceFilterValue) => {
+  if (!filters.customStart || !filters.customEnd) return dateRangeMonths.custom;
+  const start = filters.customStart.slice(0, 7);
+  const end = filters.customEnd.slice(0, 7);
+  return months.filter((month) => {
+    const period = monthIsoFor(month);
+    return period >= start && period <= end;
+  });
+};
+const selectedMonthsFor = (filters: FinanceFilterValue) =>
+  filters.reportingPeriod === 'custom' ? customMonthsFor(filters) : dateRangeMonths[filters.reportingPeriod];
+const selectedPeriodLabel = (filters: FinanceFilterValue) =>
+  filters.reportingPeriod === 'custom' ? formatCustomPeriod(filters.customStart, filters.customEnd) : dateRangeLabels[filters.reportingPeriod];
 const monthFromIsoDate = (date: string) => {
   if (!date) return '';
   return months[Number(date.slice(5, 7)) - 1] || '';
 };
-const isDateInRange = (date: string, dateRange: ReportingDateRange) => selectedMonthsFor(dateRange).includes(monthFromIsoDate(date));
-const isMonthInRange = (month: string, dateRange: ReportingDateRange) => selectedMonthsFor(dateRange).includes(month);
-const filteredMonthlyFinance = (dateRange: ReportingDateRange) => monthlyFinance.filter((item) => isMonthInRange(item.month, dateRange));
-const filteredExecutiveTrend = (dateRange: ReportingDateRange) => executiveTrend.filter((item) => isMonthInRange(item.month, dateRange));
-const lastMonthlyFinancePoint = (dateRange: ReportingDateRange) => {
-  const rows = filteredMonthlyFinance(dateRange);
+const isDateInRange = (date: string, filters: FinanceFilterValue) => selectedMonthsFor(filters).includes(monthFromIsoDate(date));
+const isMonthInRange = (month: string, filters: FinanceFilterValue) => selectedMonthsFor(filters).includes(month);
+const filteredMonthlyFinance = (filters: FinanceFilterValue) => monthlyFinance.filter((item) => isMonthInRange(item.month, filters));
+const filteredExecutiveTrend = (filters: FinanceFilterValue) => executiveTrend.filter((item) => isMonthInRange(item.month, filters));
+const lastMonthlyFinancePoint = (filters: FinanceFilterValue) => {
+  const rows = filteredMonthlyFinance(filters);
   return rows[rows.length - 1] ?? monthlyFinance[monthlyFinance.length - 1];
 };
-const currentMonthCount = (dateRange: ReportingDateRange) => selectedMonthsFor(dateRange).length;
+const currentMonthCount = (filters: FinanceFilterValue) => selectedMonthsFor(filters).length;
 
 function PageShell({
   title,
@@ -101,9 +129,9 @@ function PageShell({
 // Recommended visual: native line, clustered/stacked column, bar, combo, or waterfall chart depending on children.
 // Approach: fixed visual container on a 16:9 report canvas with report-page tooltip support.
 // Interaction: native cross-filtering, field parameters, bookmarks, or drillthrough only.
-function ChartCard({ title, subtitle, height = 220, children }: { title: string; subtitle: string; height?: number; children: React.ReactNode }) {
+function ChartCard({ title, subtitle, height = 220, className = '', children }: { title: string; subtitle: string; height?: number; className?: string; children: React.ReactNode }) {
   return (
-    <div className="print-section bg-white border border-[#CFD5D0] p-3">
+    <div className={`print-section bg-white border border-[#CFD5D0] p-3 ${className}`}>
       <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
       <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>
       <ResponsiveContainer width="100%" height={height}>{children as any}</ResponsiveContainer>
@@ -140,15 +168,6 @@ function FinanceTable({ title, subtitle, columns, rows }: { title: string; subti
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-function DetailCandidate({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="print-section bg-white border border-[#CFD5D0] p-3">
-      <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
-      <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>
     </div>
   );
 }
@@ -347,11 +366,16 @@ function BalanceSheetStatementTable({
   );
 }
 
-export function ExecutiveSnapshot({ dateRange }: FinancePageProps) {
+export function ExecutiveSnapshot({ filters }: FinancePageProps)
+{
+  const dateRange = filters;
   const [topListView, setTopListView] = useState<'customers' | 'vendors'>('customers');
   const currentPeriodLabel = selectedPeriodLabel(dateRange);
   const selectedMonthlyFinance = filteredMonthlyFinance(dateRange);
   const selectedTrend = filteredExecutiveTrend(dateRange);
+  const trendSubtitle = selectedTrend.length > 1
+    ? 'Monthly trend with prior-period comparison for the selected reporting period'
+    : 'Current and prior-period comparison for the selected reporting period';
   const selectedCashFlowTrend = monthlyCashFlowTrend.filter((item) => isMonthInRange(item.month, dateRange));
   const selectedDeals = financeDeals.filter((deal) => isDateInRange(deal.stage1Date, dateRange));
   const dealsWithEarnedStage = financeDeals.filter((deal) =>
@@ -421,7 +445,7 @@ export function ExecutiveSnapshot({ dateRange }: FinancePageProps) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2">
-        <ChartCard title="Earned Revenue and Expense Trend" subtitle="Month-over-month and year-over-year for the selected period" height={190}>
+        <ChartCard title="Earned Revenue and Expense Trend" subtitle={trendSubtitle} height={300} className="h-full">
           <BarChart data={selectedTrend} margin={{ top: 5, right: 20, left: 10, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
             <XAxis dataKey="month" tick={chartText} />
@@ -493,7 +517,9 @@ export function ExecutiveSnapshot({ dateRange }: FinancePageProps) {
   );
 }
 
-export function IncomeStatement({ dateRange }: FinancePageProps) {
+export function IncomeStatement({ filters }: FinancePageProps)
+{
+  const dateRange = filters;
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const selectedMonthlyFinance = filteredMonthlyFinance(dateRange);
   const selectedTrend = filteredExecutiveTrend(dateRange);
@@ -623,24 +649,19 @@ export function IncomeStatement({ dateRange }: FinancePageProps) {
           </LineChart>
         </ChartCard>
       </div>
-      <DetailCandidate
-        title="Future Phase — Pending Scope Confirmation"
-        subtitle="RP/RPM analysis is intentionally outside the main Income Statement page. No detailed RP or RPM profitability calculations are included in this mockup."
-      />
     </PageShell>
   );
 }
 
-export function RevenueRecognition({ dateRange }: FinancePageProps) {
+export function RevenueRecognition({ filters }: FinancePageProps)
+{
+  const dateRange = filters;
   const selectedRecognitionMonths = selectedMonthsFor(dateRange);
-  const [recognitionPeriodFilter, setRecognitionPeriodFilter] = useState('all');
   const [stageFilter, setStageFilter] = useState('all');
   const [recognitionMetric, setRecognitionMetric] = useState<'dollars' | 'acres'>('dollars');
   const [stageView, setStageView] = useState<'chart' | 'table'>('chart');
-  const recognitionMonths = recognitionPeriodFilter === 'all' ? selectedRecognitionMonths : [recognitionPeriodFilter];
-  const recognitionPeriod = recognitionPeriodFilter === 'all'
-    ? selectedPeriodLabel(dateRange)
-    : `${recognitionPeriodFilter} 2026`;
+  const recognitionMonths = selectedRecognitionMonths;
+  const recognitionPeriod = selectedPeriodLabel(dateRange);
   const stageNames = {
     stage1: 'Stage 1 — Signed Agreement',
     stage2: 'Stage 2 — Soil Data Collection Complete',
@@ -722,10 +743,6 @@ export function RevenueRecognition({ dateRange }: FinancePageProps) {
     stage3: stageFilter === 'all' || stageFilter === 'stage3' ? metricValue(recognitionMetric, item.stage3Dollars, item.stage3Acres, item.stage3Contracts) : 0,
   }));
   const periodRows = visiblePeriodData.map((item) => [item.period, item.stage1, item.stage2, item.stage3, item.stage1 + item.stage2 + item.stage3]);
-  const recognitionPeriodOptions = [
-    { value: 'all', label: 'All Selected Periods' },
-    ...selectedRecognitionMonths.map((month) => ({ value: month, label: `${month} 2026` })),
-  ];
 
   return (
     <PageShell
@@ -742,8 +759,7 @@ export function RevenueRecognition({ dateRange }: FinancePageProps) {
         <PowerBICard title="Recognized Acres" value={formatAcres(recognizedAcres)} subtitle="Deals with Earned Revenue" tooltip="Acres associated with deals that have at least one completed recognition stage." />
       </div>
       <div className="bg-white border border-[#CFD5D0] p-4">
-        <div className="grid grid-cols-4 gap-3">
-          <PowerBISlicer title="Recognition Period" value={recognitionPeriodFilter} onChange={setRecognitionPeriodFilter} options={recognitionPeriodOptions} />
+        <div className="grid grid-cols-3 gap-3">
           <PowerBISlicer title="Recognition Stage" value={stageFilter} onChange={setStageFilter} options={[{ value: 'all', label: 'All Stages' }, { value: 'stage1', label: stageNames.stage1 }, { value: 'stage2', label: stageNames.stage2 }, { value: 'stage3', label: stageNames.stage3 }]} />
           <PowerBISlicer title="Metric" value={recognitionMetric} onChange={(value) => setRecognitionMetric(value as 'dollars' | 'acres')} options={[{ value: 'dollars', label: 'Dollars' }, { value: 'acres', label: 'Acres' }]} />
           <PowerBISlicer title="View" value={stageView} onChange={(value) => setStageView(value as 'chart' | 'table')} options={[{ value: 'chart', label: 'Chart' }, { value: 'table', label: 'Table' }]} />
@@ -752,7 +768,7 @@ export function RevenueRecognition({ dateRange }: FinancePageProps) {
       <div className="text-[11px] text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
         Stage-acre calculation pending Finance confirmation. Confirm whether acres should represent full contract acres at each stage, unique acres, or another approved definition.
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 items-start gap-3">
         {stageView === 'chart' ? (
           <ChartCard title="Monthly Stage Reporting" subtitle={`${metricLabel(recognitionMetric)} by recognition period and stage`} height={210}>
             <BarChart data={visiblePeriodData}>
@@ -779,14 +795,14 @@ export function RevenueRecognition({ dateRange }: FinancePageProps) {
           ['Unmatched Records', unmatchedRecords],
           ['Last Reconciliation Date', '2026-06-30'],
         ]} />
-        <DetailCandidate title="Power BI Filter Pane" subtitle="Customer, Source, and Reconciliation Result filters are modeled as Power BI filter-pane fields rather than main-canvas slicers." />
       </div>
-      <DetailCandidate title="Revenue Recognition Audit Detail" subtitle="Drillthrough or paginated report: contract/deal, customer, contract value, acres, stage dates, stage amounts, total Earned Revenue, GL amount, and reconciliation result." />
     </PageShell>
   );
 }
 
-export function BalanceSheet({ dateRange }: FinancePageProps) {
+export function BalanceSheet({ filters }: FinancePageProps)
+{
+  const dateRange = filters;
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'currentAssets', 'liabilities', 'currentLiabilities', 'equity']));
   const selectedMonth = selectedMonthsFor(dateRange)[selectedMonthsFor(dateRange).length - 1];
   const selectedTrendPoint = balanceSheetTrend.find((item) => item.month === selectedMonth) ?? balanceSheetTrend[balanceSheetTrend.length - 1];
@@ -921,7 +937,7 @@ export function BalanceSheet({ dateRange }: FinancePageProps) {
           ['Overdue AR', overdueAr],
           ['Near-Term AP', upcomingAp],
         ]} />
-        <div className="bg-white border border-[#CFD5D0] p-3">
+        <div className="self-start bg-white border border-[#CFD5D0] p-3">
           <div className="flex items-center justify-between gap-3 text-sm" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
             <span className="font-semibold text-[#006637]">Assets = Liabilities + Equity</span>
             <span className={balanceDifference === 0 ? 'font-semibold text-[#2F7641]' : 'font-semibold text-[#A33C1B]'}>
@@ -935,7 +951,9 @@ export function BalanceSheet({ dateRange }: FinancePageProps) {
   );
 }
 
-export function CashFlow({ dateRange }: FinancePageProps) {
+export function CashFlow({ filters }: FinancePageProps)
+{
+  const dateRange = filters;
   const selectedCashFlowTrend = monthlyCashFlowTrend.filter((item) => isMonthInRange(item.month, dateRange));
   const firstCashMonth = selectedCashFlowTrend[0] ?? monthlyCashFlowTrend[0];
   const lastCashMonth = selectedCashFlowTrend[selectedCashFlowTrend.length - 1] ?? monthlyCashFlowTrend[monthlyCashFlowTrend.length - 1];
@@ -987,7 +1005,9 @@ export function CashFlow({ dateRange }: FinancePageProps) {
   );
 }
 
-export function ExceptionReporting({ dateRange }: FinancePageProps) {
+export function ExceptionReporting({ filters }: FinancePageProps)
+{
+  const dateRange = filters;
   const [exceptionTypeFilter, setExceptionTypeFilter] = useState('all');
   const exceptionCategories = [
     'Backward Stage Movement',
@@ -1044,10 +1064,6 @@ export function ExceptionReporting({ dateRange }: FinancePageProps) {
       </div>
       <FinanceTable title="Exception Summary" subtitle="Potential Financial Impact pending calculation definition" columns={['Exception Type', 'Record Count', 'Potential Financial Impact']} rows={exceptionSummaryRows} />
       <FinanceTable title="Exception Detail" subtitle="Read-only table; customer and source system filters belong in the Power BI filter pane" columns={['Exception Type', 'Deal / Project', 'Customer', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date']} rows={exceptionDetailRows} />
-      <DetailCandidate title="Read-Only Drillthrough" subtitle="Drillthrough can expose the same exception detail fields for export and investigation; no assignment, status, notes, resolution workflow, or action buttons are included." />
-      <div className="text-[11px] text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
-        Proactive alerts may require Power Automate, Fabric, or data-pipeline monitoring outside the Power BI report.
-      </div>
     </PageShell>
   );
 }
