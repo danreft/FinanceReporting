@@ -50,11 +50,10 @@ function PageShell({
 }) {
   return (
     <div className="print-report powerbi-page-shell p-4">
-      <div className={`powerbi-canvas ${canvasClassName || 'space-y-2 overflow-hidden'}`}>
+      <div className={`powerbi-canvas ${canvasClassName || 'space-y-2'}`}>
       <div className="flex items-start justify-between gap-4 print-section">
         <div>
           <div className="text-lg font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
-          {subtitle && <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
           <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>Selected Period: {selectedPeriod}</div>
         </div>
       </div>
@@ -362,7 +361,7 @@ export function ExecutiveSnapshot() {
       subtitle="Executive financial overview for the selected reporting period."
       selectedPeriod={currentPeriodLabel}
       exportContext="Presentation-friendly export: six KPI cards, trend, basic cash outlook, AR/AP relationship, top 10 list, and Booked Sales / Earned Revenue / Final Sales comparison."
-      canvasClassName="fixed-report-canvas space-y-2 overflow-hidden"
+      canvasClassName="fixed-report-canvas space-y-2"
     >
       <div className="grid grid-cols-6 gap-2">
         <PowerBICard title="Booked Sales" value={formatMoney(financeSummary.bookedSales)} variance="+8.4% vs prior period" status="positive" subtitle="Signed DocuSign agreements" tooltip="Total signed contract value, associated acres, and contract count for agreements fully signed through DocuSign during the selected reporting period." />

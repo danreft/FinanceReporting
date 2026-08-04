@@ -8,18 +8,14 @@
 
 .powerbi-canvas {
   width: min(100%, 1280px);
-  height: 720px;
   min-height: 720px;
-  max-height: 720px;
   margin: 0 auto;
   background: #F5F7F6;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .fixed-report-canvas {
-  height: 720px;
   min-height: 720px;
-  max-height: 720px;
 }
 
 @media (min-width: 1180px) {
