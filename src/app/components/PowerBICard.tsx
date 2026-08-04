@@ -19,9 +19,9 @@ export default function PowerBICard({ title, value, subtitle, variance, status, 
   };
 
   return (
-    <div className="bg-white border border-[#CFD5D0] p-4 flex flex-col" title={tooltip} aria-label={tooltip ? `${title}: ${tooltip}` : title}>
-      <div className="text-xs text-[#3D654D] mb-2" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{title}</div>
-      <div className="text-3xl font-semibold text-[#1A1A1A] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{value}</div>
+    <div className="bg-white border border-[#CFD5D0] p-3 flex flex-col" title={tooltip} aria-label={tooltip ? `${title}: ${tooltip}` : title}>
+      <div className="text-xs text-[#3D654D] mb-1" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{title}</div>
+      <div className="text-2xl font-semibold text-[#1A1A1A] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{value}</div>
       {variance && <div className={`text-xs font-semibold mb-1 ${status ? statusClasses[status] : 'text-[#3D654D]'}`} style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{variance}</div>}
       {subtitle && <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
     </div>

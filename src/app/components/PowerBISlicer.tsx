@@ -8,7 +8,7 @@ interface SlicerProps {
 
 // Power BI implementation metadata:
 // Recommended visual: native slicer using dropdown or list style.
-// Approach: synchronize common date, department, revenue source, referral partner, and salesperson slicers across pages.
+// Approach: synchronize common date, department, source, and RP or RPM slicers across pages.
 // Interaction: native slicer filtering or field-parameter selection; no custom dropdown logic in the target report.
 export default function PowerBISlicer({ title, value, options, onChange, type = 'dropdown' }: SlicerProps) {
   if (type === 'list') {

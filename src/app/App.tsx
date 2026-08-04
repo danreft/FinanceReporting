@@ -14,14 +14,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('executiveSnapshot');
   const [financeFilters, setFinanceFilters] = useState<FinanceFilterValue>({
     dateRange: 'yearToDate',
-    month: 'all',
-    quarter: 'all',
-    year: '2026',
     department: 'all',
-    revenueSource: 'all',
-    referralPartner: 'all',
-    salesperson: 'all',
-    comparisonPeriod: 'priorYear',
+    source: 'all',
   });
 
   const handleFinanceFilterChange = (filterName: keyof FinanceFilterValue, value: string) => {
@@ -87,7 +81,7 @@ export default function App() {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-hidden">
           {renderActivePage()}
         </div>
       </div>

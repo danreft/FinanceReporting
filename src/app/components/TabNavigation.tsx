@@ -15,7 +15,7 @@ const tabs = [
 export default function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
     <div className="bg-white border-b border-[#CFD5D0] px-6">
-      <div className="flex gap-1 overflow-x-auto">
+      <div className="flex gap-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
