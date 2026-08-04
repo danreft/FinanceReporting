@@ -14,30 +14,28 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('executiveSnapshot');
   const [financeFilters, setFinanceFilters] = useState<FinanceFilterValue>({
     dateRange: 'yearToDate',
-    department: 'all',
-    source: 'all',
   });
 
-  const handleFinanceFilterChange = (filterName: keyof FinanceFilterValue, value: string) => {
+  const handleFinanceFilterChange = (filterName: keyof FinanceFilterValue, value: FinanceFilterValue[keyof FinanceFilterValue]) => {
     setFinanceFilters((prev) => ({ ...prev, [filterName]: value }));
   };
 
   const renderActivePage = () => {
     switch (activeTab) {
       case 'executiveSnapshot':
-        return <ExecutiveSnapshot />;
+        return <ExecutiveSnapshot dateRange={financeFilters.dateRange} />;
       case 'incomeStatement':
-        return <IncomeStatement />;
+        return <IncomeStatement dateRange={financeFilters.dateRange} />;
       case 'balanceSheet':
-        return <BalanceSheet />;
+        return <BalanceSheet dateRange={financeFilters.dateRange} />;
       case 'cashFlow':
-        return <CashFlow />;
+        return <CashFlow dateRange={financeFilters.dateRange} />;
       case 'revenueRecognition':
-        return <RevenueRecognition />;
+        return <RevenueRecognition dateRange={financeFilters.dateRange} />;
       case 'exceptionReporting':
-        return <ExceptionReporting />;
+        return <ExceptionReporting dateRange={financeFilters.dateRange} />;
       default:
-        return <ExecutiveSnapshot />;
+        return <ExecutiveSnapshot dateRange={financeFilters.dateRange} />;
     }
   };
 

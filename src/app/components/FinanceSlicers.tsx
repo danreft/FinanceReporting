@@ -1,14 +1,14 @@
 import PowerBISlicer from './PowerBISlicer';
 
+export type ReportingDateRange = 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'yearToDate';
+
 export interface FinanceFilterValue {
-  dateRange: string;
-  department: string;
-  source: string;
+  dateRange: ReportingDateRange;
 }
 
 interface FinanceSlicersProps {
   filters: FinanceFilterValue;
-  onFilterChange: (filterName: keyof FinanceFilterValue, value: string) => void;
+  onFilterChange: (filterName: keyof FinanceFilterValue, value: FinanceFilterValue[keyof FinanceFilterValue]) => void;
 }
 
 export default function FinanceSlicers({ filters, onFilterChange }: FinanceSlicersProps) {
@@ -21,40 +21,23 @@ export default function FinanceSlicers({ filters, onFilterChange }: FinanceSlice
       <PowerBISlicer
         title="Reporting Period"
         value={filters.dateRange}
-        onChange={(value) => onFilterChange('dateRange', value)}
+        onChange={(value) => onFilterChange('dateRange', value as ReportingDateRange)}
         options={[
           { value: 'thisMonth', label: 'This Month' },
           { value: 'lastMonth', label: 'Last Month' },
           { value: 'thisQuarter', label: 'This Quarter' },
           { value: 'yearToDate', label: 'Year to Date' },
-          { value: 'priorYear', label: 'Prior Year' },
         ]}
       />
 
-      <PowerBISlicer
-        title="Department"
-        value={filters.department}
-        onChange={(value) => onFilterChange('department', value)}
-        options={[
-          { value: 'all', label: 'All Departments' },
-          { value: 'sales', label: 'Sales' },
-          { value: 'rpNetwork', label: 'Referral Partner Network' },
-          { value: 'soilOperations', label: 'Soil Operations' },
-          { value: 'reporting', label: 'Reporting' },
-          { value: 'ga', label: 'General and Administrative' },
-        ]}
-      />
-
-      <PowerBISlicer
-        title="Source"
-        value={filters.source}
-        onChange={(value) => onFilterChange('source', value)}
-        options={[
-          { value: 'all', label: 'All Sources' },
-          { value: 'directSourced', label: 'Direct-Sourced' },
-          { value: 'rpSourced', label: 'RP-Sourced' },
-        ]}
-      />
+      <div className="bg-white border border-[#CFD5D0] p-3">
+        <div className="text-xs font-semibold text-[#1A1A1A] mb-2 uppercase tracking-wide" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+          Filter Pane
+        </div>
+        <div className="text-xs text-[#3D654D] leading-4" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+          Department, Source, Customer, RP/RPM, and other secondary filters are modeled as Power BI filter pane fields.
+        </div>
+      </div>
     </div>
   );
 }

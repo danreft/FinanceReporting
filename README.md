@@ -1,3 +1,3 @@
 # Finance Reporting
 
-Finance Reporting dashboard application.
+Finance Reporting report mockup.

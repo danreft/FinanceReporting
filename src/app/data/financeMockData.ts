@@ -349,7 +349,7 @@ export const exceptions = [
   ['FR-1340', 'Lakeside Crop Systems', 'Missing acreage', 'Booked Sales', 'Signed Agreement', '2026-06-11', 0, '2026-06-20'],
 ];
 
-// Mock finance and revenue-recognition control exceptions for the Exception Reporting dashboard.
+// Mock finance and revenue-recognition control exceptions for the Exception Reporting page.
 export const controlExceptions = [
   {
     id: 'EX-1001',

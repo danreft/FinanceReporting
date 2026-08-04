@@ -22,7 +22,7 @@ This document separates confirmed Finance Reporting requirements from mockup ass
 ### Executive Snapshot
 
 - Show Booked Sales, Earned Revenue, Final Sales, Free Cash Flow, Accounts Receivable, and Accounts Payable.
-- Show Revenue and Expense Trend.
+- Show Earned Revenue and Expense Trend.
 - Show Basic Cash Outlook.
 - Show AR and AP Relationship.
 - Show Top 10 Customers and Top 10 Vendors.
@@ -32,9 +32,9 @@ This document separates confirmed Finance Reporting requirements from mockup ass
 
 - Show Total Revenue, Total Expenses, Operating Income, and Net Income.
 - Show a matrix-compatible Income Statement structure.
-- Show revenue by All Sources, RP-Sourced, and Direct-Sourced.
+- Show Earned Revenue by All Sources, RP-Sourced, and Direct-Sourced, pending Finance confirmation of source labels.
 - Show expenses by department.
-- Provide minimal RP and RPM financial analysis through a supporting drillthrough view.
+- Defer RP and RPM analysis unless scope is confirmed.
 
 ### Balance Sheet
 
@@ -46,19 +46,18 @@ This document separates confirmed Finance Reporting requirements from mockup ass
 
 ### Cash Flow
 
-- Show Operating Cash Flow, Investing Cash Flow, Financing Cash Flow, Free Cash Flow, and Ending Cash.
+- Show Ending Cash, Net Change in Cash, and Free Cash Flow.
 - Show a matrix-compatible Cash Flow Statement structure.
-- Show Basic Cash Outlook.
+- Show Basic Cash Outlook as illustrative.
 - Show Free Cash Flow trend and period comparison.
 
 ### Revenue Recognition
 
 - Show Total Earned Revenue.
-- Show Earned Revenue for Signed Agreement, Soil Data Collection Complete, and Report Complete.
-- Show Recognized Acres and Recognized Contracts.
+- Show Stage 1 Earned Revenue, Stage 2 Earned Revenue, and Stage 3 Earned Revenue.
+- Show Recognized Acres.
 - Show Earned Revenue by stage and period.
-- Support dollars, acres, and contract count views.
-- Show current-period versus prior-period comparison.
+- Support dollars and acres views.
 - Reconcile Operational or CRM Earned Revenue to General-Ledger Revenue and variance.
 - Provide detailed audit information through drillthrough or paginated report output.
 
@@ -66,14 +65,12 @@ This document separates confirmed Finance Reporting requirements from mockup ass
 
 - Track only these exception types:
   - Backward Stage Movement
-  - Repeated Revenue Stage Event
   - Missing Stage Date
-  - Revenue Recognition Date Reset
   - CRM or Operational-to-General-Ledger Mismatch
   - Historical-Period Change
-  - Other Out-of-Pattern Transaction
 - Show Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, and Historical-Period Changes.
-- Provide read-only exception detail through drillthrough or Export Data.
+- Show a compact exception summary table and read-only exception detail table.
+- Provide read-only exception detail through drillthrough, paginated report, or Export Data.
 
 ## 2. Confirmed Business Definitions
 
@@ -99,27 +96,29 @@ Accounts where the complete customer balance has been collected and the deal has
 - RP-Sourced
 - Direct-Sourced
 
-## 3. Mockup Assumptions Requiring Finance Validation
+## 3. Pending Finance Confirmation
 
-These items are not approved requirements. They must be validated by Finance before Power BI DAX, accounting treatment, or production data rules are finalized.
-
-- Whether every recognition stage is always exactly one-third.
-- Rounding rules.
-- Discounts.
-- Change orders.
-- Cancellations.
-- Refunds.
-- Credits.
-- Contract amendments.
-- Partial acreage changes.
-- Reopened deals.
-- Manual adjustments.
-- Historical January-June treatment.
-- Expense allocation to RPs and RPMs.
-- Incentive qualification and payout calculations.
-- QuickBooks account hierarchy.
-- Materiality thresholds.
-- Period-close rules.
+1. What event officially establishes Booked Sales:
+   - RFS Submitted
+   - Fully signed agreement in DocuSign
+   - Another CRM stage
+2. What date should be used for Booked Sales reporting?
+3. Confirm the three Earned Revenue triggers:
+   - Signed Agreement
+   - Soil Data Collection Complete
+   - Report Complete
+4. Confirm whether each Earned Revenue stage always equals one-third of the approved contract value.
+5. Confirm which contract value is used:
+   - Original
+   - Discounted
+   - Current adjusted value
+6. Confirm how acres should be calculated across Revenue Recognition stages.
+7. Confirm the event and date that officially establish Final Sales.
+8. Confirm how backward stage movement or corrected stage dates should affect closed reporting periods.
+9. Confirm the General Ledger account or account group used for Earned Revenue reconciliation.
+10. Confirm which exception types are required in the initial release.
+11. Confirm whether RP/RPM profitability is part of the initial release or a future phase.
+12. Confirm whether cash forecasting is part of the initial release or a future phase.
 
 ## 4. Items Explicitly Excluded From the Mockups
 
@@ -134,6 +133,7 @@ These items are not approved requirements. They must be validated by Finance bef
 - Complex RP scoring.
 - Writeback from Power BI.
 - Any accounting rule not stated in the meeting.
+- Proactive alerting as a native Power BI report capability.
 
 ## 5. Power BI Implementation Notes
 
@@ -142,7 +142,8 @@ These items are not approved requirements. They must be validated by Finance bef
 - Use native slicers, matrices, table visuals, chart visuals, field parameters, bookmarks, report-page tooltips, and drillthrough pages.
 - Use paginated reports for formal financial statement packages and wide audit/detail outputs.
 - Keep oversized audit tables off the primary report pages.
-- Keep RP and RPM analysis as a simple read-only drillthrough or supporting detail view.
+- Keep RP and RPM analysis deferred unless scope is confirmed.
 - Use standard Power BI Export Data and Export to PDF workflows.
 - Do not implement writeback, assignment, resolution, or approval behavior in Power BI.
 - Do not implement accounting logic for unresolved assumptions until Finance approves the final business rules.
+- Use Power Automate, Fabric, or data-pipeline monitoring for proactive alerting if required outside the Power BI report.
