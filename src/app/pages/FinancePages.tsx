@@ -160,16 +160,25 @@ function FinanceTable({
   const numericColumn = (column: string) =>
     column !== columns[0] && (/amount|value|dollars|sales|revenue|period|variance|impact/i.test(column));
   const compactPeriodTable = columns.length === 4 && columns.includes('Current Period') && columns.includes('Prior Period');
+  const columnWidth = (index: number) => {
+    if (!compactPeriodTable) return undefined;
+    return index === 0 ? '44%' : index === 3 ? '18%' : '19%';
+  };
 
   return (
     <div className="print-section bg-white border border-[#CFD5D0] p-3 overflow-hidden">
       <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
       {subtitle && <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
       <table className={`w-full border-collapse text-xs ${compactPeriodTable ? 'table-fixed' : ''}`} style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+        {compactPeriodTable && (
+          <colgroup>
+            {columns.map((column, index) => <col key={column} style={{ width: columnWidth(index) }} />)}
+          </colgroup>
+        )}
         <thead>
           <tr className="border-b border-[#CFD5D0]">
-            {columns.map((column) => (
-              <th key={column} className={`${numericColumn(column) ? 'text-right' : 'text-left'} text-[#006637] font-semibold py-1 pr-2 whitespace-nowrap overflow-hidden text-ellipsis`}>{column}</th>
+            {columns.map((column, index) => (
+              <th key={column} className={`${numericColumn(column) ? 'text-right' : 'text-left'} text-[#006637] font-semibold py-1 pr-2 ${compactPeriodTable && index === 0 ? 'whitespace-normal' : 'whitespace-nowrap'} overflow-hidden text-ellipsis`}>{column}</th>
             ))}
           </tr>
         </thead>
@@ -177,7 +186,7 @@ function FinanceTable({
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex} className="border-b border-[#E6EEE7] last:border-0">
               {row.map((cell, cellIndex) => (
-                <td key={`${rowIndex}-${cellIndex}`} className={`${numericColumn(columns[cellIndex]) ? 'text-right' : 'text-left'} py-1 pr-2 text-[#1A1A1A] whitespace-nowrap overflow-hidden text-ellipsis`}>
+                <td key={`${rowIndex}-${cellIndex}`} className={`${numericColumn(columns[cellIndex]) ? 'text-right' : 'text-left'} py-1 pr-2 text-[#1A1A1A] ${compactPeriodTable && cellIndex === 0 ? 'whitespace-normal break-words' : 'whitespace-nowrap overflow-hidden text-ellipsis'}`}>
                   {onDrillDown && typeof cell === 'number' && isPeriodDrillDownColumn(columns[cellIndex]) ? (
                     <button
                       type="button"
