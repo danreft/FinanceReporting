@@ -397,7 +397,11 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
   const periodShare = currentMonthCount(dateRange) / months.length;
   const totalVendorSpend = vendors.reduce((total, [, spend]) => total + Number(spend) * periodShare, 0);
   const topCustomers = selectedDeals
-    .map((deal) => [deal.customer, deal.contractValue] as [string, number])
+    .reduce<Record<string, number>>((customersByBookedSales, deal) => {
+      customersByBookedSales[deal.customer] = (customersByBookedSales[deal.customer] ?? 0) + deal.contractValue;
+      return customersByBookedSales;
+    }, {});
+  const topCustomerRows = Object.entries(topCustomers)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
     .map(([customer, value], index) => [index + 1, customer, value, `${((value / Math.max(selectedSummary.bookedSales, 1)) * 100).toFixed(1)}%`]);
@@ -407,7 +411,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
     .slice(0, 10)
     .map(([vendor, spend], index) => [index + 1, vendor, spend, `${((spend / Math.max(totalVendorSpend, 1)) * 100).toFixed(1)}%`]);
   const topTable = topListView === 'customers'
-    ? { title: 'Top 10 Customers', columns: ['Rank', 'Customer', 'Amount', '% of Total'], rows: topCustomers }
+    ? { title: 'Top 10 Customers by Booked Sales', subtitle: 'Booked Sales for the selected reporting period', columns: ['Rank', 'Customer', 'Booked Sales', '% of Total'], rows: topCustomerRows }
     : { title: 'Top 10 Vendors', columns: ['Rank', 'Vendor', 'Amount', '% of Total'], rows: topVendors };
   const processComparison = [
     ['Booked Sales', selectedSummary.bookedSales, selectedSummary.bookedAcres, selectedDeals.length],
@@ -423,7 +427,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
   const arApRows = [
     ['Total AR', selectedSummary.accountsReceivable],
     ['Total AP', selectedSummary.accountsPayable],
-    ['Overdue AR', 290000],
+    ['AR over 90 days', 290000],
     ['Near-Term AP', 360000],
   ];
 
@@ -436,8 +440,8 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
       canvasClassName="fixed-report-canvas space-y-2"
     >
       <div className="grid grid-cols-6 gap-2">
-        <PowerBICard title="Booked Sales" value={formatMoney(selectedSummary.bookedSales)} variance="+8.4% vs prior period" status="positive" subtitle="Signed DocuSign agreements" tooltip="Total signed contract value, associated acres, and contract count for agreements fully signed through DocuSign during the selected reporting period." />
-        <PowerBICard title="Earned Revenue" value={formatMoney(selectedSummary.earnedRevenue)} variance="+6.1% vs prior period" status="positive" subtitle="GAAP recognized revenue" tooltip="GAAP-compliant revenue recognized through Signed Agreement, Soil Data Collection Complete, and Report Complete." />
+        <PowerBICard title="Booked Sales" value={formatMoney(selectedSummary.bookedSales)} variance="+8.4% vs prior period" status="positive" subtitle={`Booked Acres: ${formatAcres(selectedSummary.bookedAcres)}`} tooltip="Total signed contract value, associated acres, and contract count for agreements fully signed through DocuSign during the selected reporting period." />
+        <PowerBICard title="Earned Revenue" value={formatMoney(selectedSummary.earnedRevenue)} variance="+6.1% vs prior period" status="positive" subtitle={`Earned Acres: ${formatAcres(selectedSummary.earnedAcres)}`} tooltip="GAAP-compliant revenue recognized through Signed Agreement, Soil Data Collection Complete, and Report Complete." />
         <PowerBICard title="Final Sales" value={formatMoney(selectedSummary.finalSales)} variance="+$891K vs prior period" status="neutral" subtitle="Paid Account deals" tooltip="Value of accounts for which the full customer balance has been collected and the deal has reached Paid Account." />
         <PowerBICard title="Free Cash Flow" value={formatMoney(selectedSummary.freeCashFlow)} variance="+$42K vs prior period" status="positive" subtitle="Operating less investing cash flow" tooltip="Operating cash flow less capital spend for the selected period." />
         <PowerBICard title="Accounts Receivable" value={formatMoney(selectedSummary.accountsReceivable)} variance="+$74K vs prior period" status="negative" subtitle="Open customer balances" tooltip="Open customer invoice balances outstanding at period end." />
@@ -487,7 +491,10 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
         </div>
         <div className="bg-white border border-[#CFD5D0] p-3 overflow-hidden">
           <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>{topTable.title}</div>
+            <div>
+              <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>{topTable.title}</div>
+              {'subtitle' in topTable && <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{topTable.subtitle}</div>}
+            </div>
             <div className="flex border border-[#CFD5D0]">
               <button type="button" onClick={() => setTopListView('customers')} className={`px-3 py-1 text-xs font-semibold ${topListView === 'customers' ? 'bg-[#006637] text-white' : 'bg-white text-[#3D654D]'}`}>Customers</button>
               <button type="button" onClick={() => setTopListView('vendors')} className={`px-3 py-1 text-xs font-semibold ${topListView === 'vendors' ? 'bg-[#006637] text-white' : 'bg-white text-[#3D654D]'}`}>Vendors</button>
@@ -789,8 +796,8 @@ export function RevenueRecognition({ filters }: FinancePageProps)
       </div>
       <div className="grid grid-cols-2 gap-3">
         <FinanceTable title="Reconciliation Summary" subtitle="Operational Earned Revenue reconciled to general-ledger revenue" columns={['Reconciliation Summary', 'Value']} rows={[
-          ['Operational or CRM Earned Revenue', crmEarnedRevenue],
-          ['General-Ledger Revenue', generalLedgerRevenue],
+          ['CRM Earned Revenue', crmEarnedRevenue],
+          ['General Ledger Earned Revenue', generalLedgerRevenue],
           ['Variance', reconciliationVariance],
           ['Unmatched Records', unmatchedRecords],
           ['Last Reconciliation Date', '2026-06-30'],
@@ -807,12 +814,12 @@ export function BalanceSheet({ filters }: FinancePageProps)
   const selectedMonth = selectedMonthsFor(dateRange)[selectedMonthsFor(dateRange).length - 1];
   const selectedTrendPoint = balanceSheetTrend.find((item) => item.month === selectedMonth) ?? balanceSheetTrend[balanceSheetTrend.length - 1];
   const priorTrendPoint = balanceSheetTrend[Math.max(balanceSheetTrend.findIndex((item) => item.month === selectedTrendPoint.month) - 1, 0)] ?? selectedTrendPoint;
-  const baseCurrentAssets = balanceSheetStatement.current.cash + balanceSheetStatement.current.accountsReceivable + balanceSheetStatement.current.otherCurrentAssets;
-  const basePriorCurrentAssets = balanceSheetStatement.prior.cash + balanceSheetStatement.prior.accountsReceivable + balanceSheetStatement.prior.otherCurrentAssets;
+  const baseCurrentAssets = balanceSheetStatement.current.cash + balanceSheetStatement.current.accountsReceivable + balanceSheetStatement.current.unbilledRevenue + balanceSheetStatement.current.otherCurrentAssets;
+  const basePriorCurrentAssets = balanceSheetStatement.prior.cash + balanceSheetStatement.prior.accountsReceivable + balanceSheetStatement.prior.unbilledRevenue + balanceSheetStatement.prior.otherCurrentAssets;
   const baseTotalAssets = baseCurrentAssets + balanceSheetStatement.current.longTermAssets;
   const basePriorTotalAssets = basePriorCurrentAssets + balanceSheetStatement.prior.longTermAssets;
-  const baseCurrentLiabilities = balanceSheetStatement.current.accountsPayable + balanceSheetStatement.current.accruedLiabilities;
-  const basePriorCurrentLiabilities = balanceSheetStatement.prior.accountsPayable + balanceSheetStatement.prior.accruedLiabilities;
+  const baseCurrentLiabilities = balanceSheetStatement.current.accountsPayable + balanceSheetStatement.current.customerDeposits + balanceSheetStatement.current.accruedLiabilities;
+  const basePriorCurrentLiabilities = balanceSheetStatement.prior.accountsPayable + balanceSheetStatement.prior.customerDeposits + balanceSheetStatement.prior.accruedLiabilities;
   const baseTotalLiabilities = baseCurrentLiabilities + balanceSheetStatement.current.longTermLiabilities;
   const basePriorTotalLiabilities = basePriorCurrentLiabilities + balanceSheetStatement.prior.longTermLiabilities;
   const baseTotalEquity = balanceSheetStatement.current.contributedCapital + balanceSheetStatement.current.retainedEarnings + balanceSheetStatement.current.currentPeriodEarnings;
@@ -837,14 +844,18 @@ export function BalanceSheet({ filters }: FinancePageProps)
   const priorCash = Math.round(balanceSheetStatement.prior.cash * priorAssetScale);
   const accountsReceivable = Math.round(balanceSheetStatement.current.accountsReceivable * assetScale);
   const priorAccountsReceivable = Math.round(balanceSheetStatement.prior.accountsReceivable * priorAssetScale);
-  const otherCurrentAssets = currentAssets - cash - accountsReceivable;
-  const priorOtherCurrentAssets = priorCurrentAssets - priorCash - priorAccountsReceivable;
+  const unbilledRevenue = Math.round(balanceSheetStatement.current.unbilledRevenue * assetScale);
+  const priorUnbilledRevenue = Math.round(balanceSheetStatement.prior.unbilledRevenue * priorAssetScale);
+  const otherCurrentAssets = currentAssets - cash - accountsReceivable - unbilledRevenue;
+  const priorOtherCurrentAssets = priorCurrentAssets - priorCash - priorAccountsReceivable - priorUnbilledRevenue;
   const longTermAssets = totalAssets - currentAssets;
   const priorLongTermAssets = priorTotalAssets - priorCurrentAssets;
   const accountsPayable = Math.round(balanceSheetStatement.current.accountsPayable * liabilityScale);
   const priorAccountsPayable = Math.round(balanceSheetStatement.prior.accountsPayable * priorLiabilityScale);
-  const accruedLiabilities = currentLiabilities - accountsPayable;
-  const priorAccruedLiabilities = priorCurrentLiabilities - priorAccountsPayable;
+  const customerDeposits = Math.round(balanceSheetStatement.current.customerDeposits * liabilityScale);
+  const priorCustomerDeposits = Math.round(balanceSheetStatement.prior.customerDeposits * priorLiabilityScale);
+  const accruedLiabilities = currentLiabilities - accountsPayable - customerDeposits;
+  const priorAccruedLiabilities = priorCurrentLiabilities - priorAccountsPayable - priorCustomerDeposits;
   const longTermLiabilities = totalLiabilities - currentLiabilities;
   const priorLongTermLiabilities = priorTotalLiabilities - priorCurrentLiabilities;
   const contributedCapital = Math.round(balanceSheetStatement.current.contributedCapital * equityScale);
@@ -871,6 +882,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
           children: [
             { id: 'cash', label: 'Cash and Cash Equivalents', current: cash, prior: priorCash },
             { id: 'accountsReceivable', label: 'Accounts Receivable', current: accountsReceivable, prior: priorAccountsReceivable },
+            { id: 'unbilledRevenue', label: '112500 - Unbilled Revenue', current: unbilledRevenue, prior: priorUnbilledRevenue },
             { id: 'otherCurrentAssets', label: 'Other Current Assets', current: otherCurrentAssets, prior: priorOtherCurrentAssets },
           ],
         },
@@ -890,6 +902,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
           prior: priorCurrentLiabilities,
           children: [
             { id: 'accountsPayable', label: 'Accounts Payable', current: accountsPayable, prior: priorAccountsPayable },
+            { id: 'customerDeposits', label: '210200 - Customer Deposits', current: customerDeposits, prior: priorCustomerDeposits },
             { id: 'accruedLiabilities', label: 'Accrued Liabilities', current: accruedLiabilities, prior: priorAccruedLiabilities },
           ],
         },
@@ -934,7 +947,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
         <FinanceTable title="AR and AP Relationship" subtitle="Open receivables and payables summary" columns={['AR and AP Relationship', 'Amount']} rows={[
           ['Total AR', accountsReceivable],
           ['Total AP', accountsPayable],
-          ['Overdue AR', overdueAr],
+          ['AR over 90 days', overdueAr],
           ['Near-Term AP', upcomingAp],
         ]} />
         <div className="self-start bg-white border border-[#CFD5D0] p-3">
@@ -978,8 +991,8 @@ export function CashFlow({ filters }: FinancePageProps)
 
   return (
     <PageShell
-      title="Cash Flow"
-      subtitle="Illustrative financial statement structure pending QuickBooks account mapping."
+      title="Statement of Cash Flows"
+      subtitle="Cash flow statement structure pending QuickBooks account mapping."
       selectedPeriod={selectedPeriodLabel(dateRange)}
       exportContext={`Finance-statement print layout. Reporting Period: ${selectedPeriodLabel(dateRange)}. Secondary account filters belong in the Power BI filter pane. Free Cash Flow definition pending Finance confirmation. Illustrative financial statement structure pending QuickBooks account mapping.`}
     >
@@ -988,7 +1001,7 @@ export function CashFlow({ filters }: FinancePageProps)
         <PowerBICard title="Net Change in Cash" value={formatMoney(netChangeInCash)} status={netChangeInCash >= 0 ? 'positive' : 'negative'} subtitle="Operating + investing + financing" tooltip="Net change in cash from operating, investing, and financing activities." />
         <PowerBICard title="Free Cash Flow" value={formatMoney(freeCashFlow)} status={freeCashFlow >= 0 ? 'positive' : 'negative'} subtitle="Definition pending Finance confirmation." tooltip="Illustrative Free Cash Flow currently uses operating cash flow plus investing cash flow. Definition pending Finance confirmation." />
       </div>
-      <FinanceTable title="Cash Flow Statement Matrix" subtitle="Illustrative operating, investing, and financing structure pending QuickBooks account mapping" columns={['Cash Flow Statement', 'Actual Amount']} rows={selectedCashFlowStatementRows} />
+      <FinanceTable title="Statement of Cash Flows" subtitle="Operating, investing, financing, and cash rollforward sections supported by the current mock data" columns={['Statement of Cash Flows', 'Actual Amount']} rows={selectedCashFlowStatementRows} />
       <div className="grid grid-cols-2 gap-3">
         <FinanceTable title="Basic Cash Outlook" subtitle="Basic cash outlook only" columns={['Cash Outlook', 'Amount']} rows={selectedCashFlowOutlook} />
         <ChartCard title="Free Cash Flow Trend" subtitle="Definition pending Finance confirmation." height={240}>
@@ -1014,6 +1027,7 @@ export function ExceptionReporting({ filters }: FinancePageProps)
     'Missing Stage Date',
     'CRM or Operational-to-General-Ledger Mismatch',
     'Historical-Period Change',
+    'RP Code Added Late',
   ];
   const filteredExceptions = controlExceptions.filter((item) => {
     if (!exceptionCategories.includes(item.exceptionType)) return false;
@@ -1038,6 +1052,9 @@ export function ExceptionReporting({ filters }: FinancePageProps)
     item.exceptionType,
     item.dealOrProject,
     item.customer,
+    item.affectedStage,
+    'rpCode' in item ? item.rpCode : 'N/A',
+    'rpCodeAddedAt' in item ? item.rpCodeAddedAt : 'N/A',
     item.affectedPeriod,
     item.revenueDifference,
     item.sourceSystem,
@@ -1063,7 +1080,7 @@ export function ExceptionReporting({ filters }: FinancePageProps)
         </div>
       </div>
       <FinanceTable title="Exception Summary" subtitle="Potential Financial Impact pending calculation definition" columns={['Exception Type', 'Record Count', 'Potential Financial Impact']} rows={exceptionSummaryRows} />
-      <FinanceTable title="Exception Detail" subtitle="Read-only table; customer and source system filters belong in the Power BI filter pane" columns={['Exception Type', 'Deal / Project', 'Customer', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date']} rows={exceptionDetailRows} />
+      <FinanceTable title="Exception Detail" subtitle="Read-only table; customer and source system filters belong in the Power BI filter pane" columns={['Exception Type', 'Deal / Project', 'Customer', 'Relevant Stage', 'RP Code', 'RP Code Added', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date']} rows={exceptionDetailRows} />
     </PageShell>
   );
 }

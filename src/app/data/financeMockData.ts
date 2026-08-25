@@ -387,7 +387,7 @@ export const monthlyCashFlowTrend = monthlyFinance.map((item, index) => ({
 export const arApSummary = [
   ['Total AR', 940000],
   ['Total AP', 520000],
-  ['Overdue AR', 290000],
+  ['AR over 90 days', 290000],
   ['Upcoming AP', 360000],
 ];
 
@@ -421,9 +421,11 @@ export const balanceSheetStatement = {
   current: {
     cash: 1840000,
     accountsReceivable: 940000,
+    unbilledRevenue: 122000,
     otherCurrentAssets: 270000,
     longTermAssets: 750000,
     accountsPayable: 520000,
+    customerDeposits: 155000,
     accruedLiabilities: 400000,
     longTermLiabilities: 1030000,
     contributedCapital: 600000,
@@ -433,9 +435,11 @@ export const balanceSheetStatement = {
   prior: {
     cash: 1690000,
     accountsReceivable: 850000,
+    unbilledRevenue: 98000,
     otherCurrentAssets: 245000,
     longTermAssets: 710000,
     accountsPayable: 560000,
+    customerDeposits: 128000,
     accruedLiabilities: 360000,
     longTermLiabilities: 990000,
     contributedCapital: 600000,
@@ -606,6 +610,21 @@ export const controlExceptions = [
     sourceSystem: 'Operations System',
     detectedDate: '2026-06-24',
     description: 'Deal moved backward after a revenue-recognition stage had been recorded.',
+  },
+  {
+    id: 'EX-1011',
+    exceptionType: 'RP Code Added Late',
+    dealOrProject: 'FR-1427',
+    customer: 'High Plains Ag Partners',
+    affectedStage: 'Signed Agreement / DocuSign',
+    affectedPeriod: '2026-06',
+    revenueDifference: 0,
+    acres: 11450,
+    sourceSystem: 'CRM',
+    detectedDate: '2026-06-29',
+    rpCode: 'PGA',
+    rpCodeAddedAt: 'Not available',
+    description: 'RP Code was added after the deal entered DocuSign stage or later in the process, post-RFS Submission. Exact added date/time is not available in the mock source.',
   },
 ];
 

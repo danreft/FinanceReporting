@@ -59,7 +59,7 @@ This document separates confirmed Finance Reporting requirements from mockup ass
 - Show Recognized Acres.
 - Show Earned Revenue by stage and period.
 - Support dollars and acres views.
-- Reconcile Operational or CRM Earned Revenue to General-Ledger Revenue and variance.
+- Reconcile CRM Earned Revenue to General Ledger Earned Revenue and variance.
 - Provide detailed audit information through drillthrough or paginated report output.
 
 ### Exception Reporting
