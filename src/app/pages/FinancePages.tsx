@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   BarChart,
   Bar,
+  ComposedChart,
   LineChart,
   Line,
   XAxis,
@@ -143,16 +144,32 @@ function ChartCard({ title, subtitle, height = 220, className = '', children }: 
 // Recommended visual: native table or matrix visual.
 // Approach: use matrix for financial statements and table for detail; wide audit/detail outputs are paginated report candidates.
 // Interaction: native sort/filter, conditional formatting, and drillthrough; no editable grid behavior.
-function FinanceTable({ title, subtitle, columns, rows }: { title: string; subtitle?: string; columns: string[]; rows: (string | number)[][] }) {
+function FinanceTable({
+  title,
+  subtitle,
+  columns,
+  rows,
+  onDrillDown,
+}: {
+  title: string;
+  subtitle?: string;
+  columns: string[];
+  rows: (string | number)[][];
+  onDrillDown?: (rowLabel: string, column: string, value: number, sourceTitle: string) => void;
+}) {
+  const numericColumn = (column: string) =>
+    column !== columns[0] && (/amount|value|dollars|sales|revenue|period|variance|impact/i.test(column));
+  const compactPeriodTable = columns.length === 4 && columns.includes('Current Period') && columns.includes('Prior Period');
+
   return (
-    <div className="print-section bg-white border border-[#CFD5D0] p-3">
+    <div className="print-section bg-white border border-[#CFD5D0] p-3 overflow-hidden">
       <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
       {subtitle && <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
-      <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+      <table className={`w-full border-collapse text-xs ${compactPeriodTable ? 'table-fixed' : ''}`} style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
         <thead>
           <tr className="border-b border-[#CFD5D0]">
             {columns.map((column) => (
-              <th key={column} className="text-left text-[#006637] font-semibold py-1 pr-2 whitespace-nowrap">{column}</th>
+              <th key={column} className={`${numericColumn(column) ? 'text-right' : 'text-left'} text-[#006637] font-semibold py-1 pr-2 whitespace-nowrap overflow-hidden text-ellipsis`}>{column}</th>
             ))}
           </tr>
         </thead>
@@ -160,8 +177,17 @@ function FinanceTable({ title, subtitle, columns, rows }: { title: string; subti
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex} className="border-b border-[#E6EEE7] last:border-0">
               {row.map((cell, cellIndex) => (
-                <td key={`${rowIndex}-${cellIndex}`} className="py-1 pr-2 text-[#1A1A1A] whitespace-nowrap">
-                  {cellIndex === 0 && typeof cell === 'string' && (cell.includes('Total') || ['Operating Activities', 'Investing Activities', 'Financing Activities'].includes(cell)) ? <span className="font-semibold text-[#006637]">{cell}</span> : renderCell(cell, columns[cellIndex])}
+                <td key={`${rowIndex}-${cellIndex}`} className={`${numericColumn(columns[cellIndex]) ? 'text-right' : 'text-left'} py-1 pr-2 text-[#1A1A1A] whitespace-nowrap overflow-hidden text-ellipsis`}>
+                  {onDrillDown && typeof cell === 'number' && isPeriodDrillDownColumn(columns[cellIndex]) ? (
+                    <button
+                      type="button"
+                      onClick={() => onDrillDown(String(row[0]), columns[cellIndex], cell, title)}
+                      className={`${numericColumn(columns[cellIndex]) ? 'text-right' : 'text-left'} w-full text-xs text-inherit underline decoration-[#90B75D] underline-offset-2`}
+                      title={`Drill down ${String(row[0])} ${columns[cellIndex]}`}
+                    >
+                      {renderCell(cell, columns[cellIndex])}
+                    </button>
+                  ) : cellIndex === 0 && typeof cell === 'string' && (cell.includes('Total') || ['Operating Activities', 'Investing Activities', 'Financing Activities'].includes(cell)) ? <span className="font-semibold text-[#006637]">{cell}</span> : renderCell(cell, columns[cellIndex])}
                 </td>
               ))}
             </tr>
@@ -202,6 +228,7 @@ type MetricMode = 'dollars' | 'acres' | 'contracts';
 const metricLabel = (metric: MetricMode) => metric === 'dollars' ? 'Dollars' : metric === 'acres' ? 'Acres' : 'Contracts';
 const metricValue = (metric: MetricMode, dollars: number, acres: number, contracts: number) => metric === 'dollars' ? dollars : metric === 'acres' ? acres : contracts;
 const chartText = { fontSize: 11, fontFamily: 'Source Sans 3, sans-serif' };
+const isPeriodDrillDownColumn = (column: string) => ['Current Period', 'Prior Period'].includes(column);
 
 type ProfitAndLossRow = {
   id: string;
@@ -212,6 +239,23 @@ type ProfitAndLossRow = {
   priorYtd: number;
   children?: ProfitAndLossRow[];
 };
+
+type DrillDownRequest = {
+  rowLabel: string;
+  column: string;
+  value: number;
+  sourceTitle: string;
+};
+
+type DrillDownDetailRow = {
+  period: string;
+  postingDate: string;
+  account: string;
+  description: string;
+  amount: number;
+};
+
+type FinalSalesDeal = (typeof financeDeals)[number];
 
 type StatementRow = {
   id: string;
@@ -234,13 +278,26 @@ function ProfitAndLossTable({
   rows,
   expandedRows,
   onToggle,
+  onDrillDown,
 }: {
   title: string;
   subtitle?: string;
   rows: ProfitAndLossRow[];
   expandedRows: Set<string>;
   onToggle: (rowId: string) => void;
+  onDrillDown?: (rowLabel: string, column: string, value: number, sourceTitle: string) => void;
 }) {
+  const drillDownCell = (row: ProfitAndLossRow, column: 'Current Period' | 'Prior Period', value: number, rowClass: string) => (
+    <button
+      type="button"
+      onClick={() => onDrillDown?.(row.label, column, value, title)}
+      className={`w-full text-right text-xs underline decoration-[#90B75D] underline-offset-2 ${rowClass}`}
+      title={`Drill down ${row.label} ${column}`}
+    >
+      {formatMoney(value)}
+    </button>
+  );
+
   const renderRows = (items: ProfitAndLossRow[], depth = 0): React.ReactNode[] =>
     items.flatMap((row) => {
       const dollarVariance = row.current - row.prior;
@@ -265,8 +322,8 @@ function ProfitAndLossTable({
             {!expandable && <span className="inline-block w-5" />}
             {row.label}
           </td>
-          <td className={`py-1 pr-2 text-right whitespace-nowrap ${rowClass}`}>{formatMoney(row.current)}</td>
-          <td className={`py-1 pr-2 text-right whitespace-nowrap ${rowClass}`}>{formatMoney(row.prior)}</td>
+          <td className="py-1 pr-2 text-right whitespace-nowrap">{onDrillDown ? drillDownCell(row, 'Current Period', row.current, rowClass) : <span className={rowClass}>{formatMoney(row.current)}</span>}</td>
+          <td className="py-1 pr-2 text-right whitespace-nowrap">{onDrillDown ? drillDownCell(row, 'Prior Period', row.prior, rowClass) : <span className={rowClass}>{formatMoney(row.prior)}</span>}</td>
           <td className={`py-1 pr-2 text-right whitespace-nowrap font-semibold ${varianceTone(dollarVariance)}`}>{formatMoney(dollarVariance)}</td>
           <td className={`py-1 pr-2 text-right whitespace-nowrap font-semibold ${varianceTone(dollarVariance)}`}>{percentFormat(percentVariance)}</td>
           <td className={`py-1 pr-2 text-right whitespace-nowrap ${rowClass}`}>{formatMoney(row.ytd)}</td>
@@ -294,6 +351,162 @@ function ProfitAndLossTable({
         </thead>
         <tbody>{renderRows(rows)}</tbody>
       </table>
+    </div>
+  );
+}
+
+function buildFinancialDrillDownRows(request: DrillDownRequest, periodMonths: string[]): DrillDownDetailRow[] {
+  const monthsForRows = periodMonths.length ? periodMonths : ['Jun'];
+  const allocationWeights = [0.38, 0.27, 0.2];
+  const firstThreeAmounts = allocationWeights.map((weight) => Math.round(request.value * weight));
+  const allocated = firstThreeAmounts.reduce((total, amount) => total + amount, 0);
+  const amounts = [...firstThreeAmounts, request.value - allocated];
+  const rowMonths = Array.from({ length: 4 }, (_, index) => monthsForRows[index % monthsForRows.length]);
+  const year = request.column === 'Prior Period' ? '2025' : '2026';
+  const descriptorByLabel: Record<string, { account: string; description: string }> = {
+    'Total Earned Revenue': { account: 'Earned Revenue', description: 'Recognized revenue detail' },
+    'RP-Sourced Earned Revenue': { account: 'RP-Sourced Earned Revenue', description: 'Referral partner revenue recognition' },
+    'Direct-Sourced Earned Revenue': { account: 'Direct-Sourced Earned Revenue', description: 'Direct customer revenue recognition' },
+    Expenses: { account: 'Operating Expense', description: 'Department expense posting' },
+    'Operating Income': { account: 'Operating Income', description: 'Operating income subtotal support' },
+    'Other Income and Expense': { account: 'Other Income and Expense', description: 'Other income and expense support' },
+    'Net Income': { account: 'Net Income', description: 'Net income support' },
+    'Estimated EBITDA': { account: 'Estimated EBITDA', description: 'Basic EBITDA add-back support' },
+  };
+  const fallback = descriptorByLabel[request.rowLabel] ?? { account: request.rowLabel, description: `${request.rowLabel} support` };
+
+  return amounts.map((amount, index) => {
+    const month = rowMonths[index] ?? rowMonths[rowMonths.length - 1];
+    const monthNumber = String(months.indexOf(month) + 1).padStart(2, '0');
+
+    return {
+      period: `${month} ${year}`,
+      postingDate: `${year}-${monthNumber}-${String(10 + index * 4).padStart(2, '0')}`,
+      account: fallback.account,
+      description: `${fallback.description} ${index + 1}`,
+      amount,
+    };
+  });
+}
+
+function DrillDownPanel({
+  request,
+  rows,
+  onClose,
+}: {
+  request: DrillDownRequest;
+  rows: DrillDownDetailRow[];
+  onClose: () => void;
+}) {
+  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6 print:hidden">
+      <div className="w-full max-w-3xl bg-white border border-[#CFD5D0] shadow-xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#CFD5D0] p-4">
+          <div>
+            <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>Drill Down Detail</div>
+            <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+              {request.sourceTitle} / {request.rowLabel} / {request.column}
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="border border-[#CFD5D0] px-3 py-1 text-xs font-semibold text-[#3D654D]">Close</button>
+        </div>
+        <div className="p-4">
+          <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+            <thead>
+              <tr className="border-b border-[#CFD5D0]">
+                {['Period', 'Posting Date', 'Account / Source', 'Description', 'Amount'].map((column, index) => (
+                  <th key={column} className={`${index === 4 ? 'text-right' : 'text-left'} py-2 pr-2 font-semibold text-[#006637] whitespace-nowrap`}>{column}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={`${row.postingDate}-${row.description}`} className="border-b border-[#E6EEE7] last:border-0">
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.period}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.postingDate}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.account}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A]">{row.description}</td>
+                  <td className="py-2 pr-2 text-right text-[#1A1A1A] whitespace-nowrap">{formatMoney(row.amount)}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={4} className="py-2 pr-2 text-right font-semibold text-[#006637]">Detail Total</td>
+                <td className="py-2 pr-2 text-right font-semibold text-[#006637] whitespace-nowrap">{formatMoney(total)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="mt-3 text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+            Detail rows are illustrative until transaction-level general-ledger and QuickBooks mappings are connected.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const dealSalesLead = (deal: FinalSalesDeal) => ('salesLead' in deal && typeof deal.salesLead === 'string' ? deal.salesLead : '');
+const hasRpCode = (deal: FinalSalesDeal) => deal.referralPartner !== 'None';
+const hasSalesLead = (deal: FinalSalesDeal) => Boolean(dealSalesLead(deal));
+const finalSalesSource = (deal: FinalSalesDeal) => (hasRpCode(deal) ? 'RP Code Present' : 'Sales Lead Present');
+
+function FinalSalesDrillDownPanel({
+  deals,
+  selectedPeriod,
+  onClose,
+}: {
+  deals: FinalSalesDeal[];
+  selectedPeriod: string;
+  onClose: () => void;
+}) {
+  const total = deals.reduce((sum, deal) => sum + deal.finalSales, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6 print:hidden">
+      <div className="w-full max-w-5xl bg-white border border-[#CFD5D0] shadow-xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#CFD5D0] p-4">
+          <div>
+            <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>Final Sales Drill Down</div>
+            <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+              Qualifying RP-code and Sales Lead final sales / {selectedPeriod}
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="border border-[#CFD5D0] px-3 py-1 text-xs font-semibold text-[#3D654D]">Close</button>
+        </div>
+        <div className="p-4">
+          <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+            <thead>
+              <tr className="border-b border-[#CFD5D0]">
+                {['Deal', 'Customer', 'Contract', 'Final Date', 'Qualifier', 'RP Code / Sales Lead', 'Final Acres', 'Final Sales'].map((column, index) => (
+                  <th key={column} className={`${index >= 6 ? 'text-right' : 'text-left'} py-2 pr-2 font-semibold text-[#006637] whitespace-nowrap`}>{column}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {deals.map((deal) => (
+                <tr key={deal.dealId} className="border-b border-[#E6EEE7] last:border-0">
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{deal.dealId}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{deal.customer}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{deal.contract}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{deal.stage3Date}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{finalSalesSource(deal)}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{hasRpCode(deal) ? deal.referralPartner : dealSalesLead(deal)}</td>
+                  <td className="py-2 pr-2 text-right text-[#1A1A1A] whitespace-nowrap">{formatAcres(deal.finalAcres)}</td>
+                  <td className="py-2 pr-2 text-right text-[#1A1A1A] whitespace-nowrap">{formatMoney(deal.finalSales)}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={7} className="py-2 pr-2 text-right font-semibold text-[#006637]">Final Sales Total</td>
+                <td className="py-2 pr-2 text-right font-semibold text-[#006637] whitespace-nowrap">{formatMoney(total)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="mt-3 text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+            Qualifying logic: final sales greater than zero, final sale date in the selected period, and either RP code/referral partner present or Sales Lead present.
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -373,9 +586,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
   const currentPeriodLabel = selectedPeriodLabel(dateRange);
   const selectedMonthlyFinance = filteredMonthlyFinance(dateRange);
   const selectedTrend = filteredExecutiveTrend(dateRange);
-  const trendSubtitle = selectedTrend.length > 1
-    ? 'Monthly trend with prior-period comparison for the selected reporting period'
-    : 'Current and prior-period comparison for the selected reporting period';
+  const trendSubtitle = 'Actual revenue and expenses vs forecast for the selected reporting period';
   const selectedCashFlowTrend = monthlyCashFlowTrend.filter((item) => isMonthInRange(item.month, dateRange));
   const selectedDeals = financeDeals.filter((deal) => isDateInRange(deal.stage1Date, dateRange));
   const dealsWithEarnedStage = financeDeals.filter((deal) =>
@@ -450,17 +661,17 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2">
         <ChartCard title="Earned Revenue and Expense Trend" subtitle={trendSubtitle} height={300} className="h-full">
-          <BarChart data={selectedTrend} margin={{ top: 5, right: 20, left: 10, bottom: 8 }}>
+          <ComposedChart data={selectedTrend} margin={{ top: 5, right: 20, left: 10, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
             <XAxis dataKey="month" tick={chartText} />
             <YAxis tick={chartText} tickFormatter={moneyAxis} />
             <Tooltip contentStyle={{ fontFamily: 'Source Sans 3, sans-serif' }} formatter={moneyTip} />
             <Legend wrapperStyle={chartText} />
             <Bar dataKey="earnedRevenue" fill="#358540" name="Earned Revenue" />
-            <Bar dataKey="priorEarnedRevenue" fill="#90B75D" name="Prior Period Earned Revenue" />
             <Bar dataKey="expenses" fill="#D5741C" name="Expenses" />
-            <Bar dataKey="priorExpenses" fill="#56708F" name="Prior Period Expenses" />
-          </BarChart>
+            <Line type="monotone" dataKey="forecastRevenue" stroke="#173B2B" strokeWidth={2.5} dot={{ r: 3 }} name="Forecast Revenue" />
+            <Line type="monotone" dataKey="forecastExpenses" stroke="#7C2D12" strokeWidth={2.5} dot={{ r: 3 }} name="Forecast Expenses" />
+          </ComposedChart>
         </ChartCard>
         </div>
         <div className="space-y-2">
@@ -528,8 +739,11 @@ export function IncomeStatement({ filters }: FinancePageProps)
 {
   const dateRange = filters;
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [drillDown, setDrillDown] = useState<DrillDownRequest | null>(null);
+  const [showFinalSalesDrillDown, setShowFinalSalesDrillDown] = useState(false);
   const selectedMonthlyFinance = filteredMonthlyFinance(dateRange);
   const selectedTrend = filteredExecutiveTrend(dateRange);
+  const selectedMonths = selectedMonthsFor(dateRange);
   const periodShare = currentMonthCount(dateRange) / months.length;
 
   const rowByName = Object.fromEntries(incomeStatementRows.map(([name, current, prior, ytd, priorYtd]) => [
@@ -588,6 +802,39 @@ export function IncomeStatement({ filters }: FinancePageProps)
     ytd: rowByName['Net Income'].ytd,
     priorYtd: rowByName['Net Income'].priorYtd,
   };
+  const ebitdaAddBackNames = ['Interest Expense', 'Income Tax Expense', 'Depreciation Expense', 'Amortization Expense'];
+  const ebitdaAddBacks = ebitdaAddBackNames.reduce(
+    (totals, rowName) => {
+      const row = rowByName[rowName];
+      if (!row) return totals;
+
+      return {
+        current: totals.current + Math.abs(Math.round(row.current * periodShare)),
+        prior: totals.prior + Math.abs(Math.round(row.prior * periodShare)),
+        ytd: totals.ytd + Math.abs(row.ytd),
+        priorYtd: totals.priorYtd + Math.abs(row.priorYtd),
+      };
+    },
+    { current: 0, prior: 0, ytd: 0, priorYtd: 0 },
+  );
+  const estimatedEbitda = {
+    current: netIncome.current + ebitdaAddBacks.current,
+    prior: netIncome.prior + ebitdaAddBacks.prior,
+    ytd: netIncome.ytd + ebitdaAddBacks.ytd,
+    priorYtd: netIncome.priorYtd + ebitdaAddBacks.priorYtd,
+  };
+  const qualifyingFinalSalesDeals = financeDeals.filter((deal) =>
+    deal.finalSales > 0
+    && isDateInRange(deal.stage3Date, dateRange)
+    && (hasRpCode(deal) || hasSalesLead(deal))
+  );
+  const rpFinalSales = qualifyingFinalSalesDeals
+    .filter(hasRpCode)
+    .reduce((total, deal) => total + deal.finalSales, 0);
+  const salesLeadFinalSales = qualifyingFinalSalesDeals
+    .filter((deal) => !hasRpCode(deal) && hasSalesLead(deal))
+    .reduce((total, deal) => total + deal.finalSales, 0);
+  const qualifyingFinalSales = rpFinalSales + salesLeadFinalSales;
   const departmentExpenseRows = expenseByDepartment.map((item) => ({
     id: `department-${item.department}`,
     label: item.department,
@@ -626,6 +873,10 @@ export function IncomeStatement({ filters }: FinancePageProps)
       return next;
     });
   };
+  const openDrillDown = (rowLabel: string, column: string, value: number, sourceTitle: string) => {
+    setDrillDown({ rowLabel, column, value, sourceTitle });
+  };
+  const drillDownRows = drillDown ? buildFinancialDrillDownRows(drillDown, selectedMonths) : [];
 
   return (
     <PageShell
@@ -634,28 +885,34 @@ export function IncomeStatement({ filters }: FinancePageProps)
       selectedPeriod={selectedPeriodLabel(dateRange)}
       exportContext={`Finance-statement print layout. Reporting Period: ${selectedPeriodLabel(dateRange)}. Secondary Department, Source, and account filters belong in the Power BI filter pane. Illustrative financial statement structure pending QuickBooks account mapping.`}
     >
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-6 gap-3">
         <PowerBICard title="Total Revenue" value={formatMoney(totalRevenue.current)} variance={formatMoney(totalRevenue.current - totalRevenue.prior)} status={totalRevenue.current >= totalRevenue.prior ? 'positive' : 'negative'} subtitle="GAAP Earned Revenue" tooltip="Total GAAP-compliant earned revenue for the selected period; distinct from Booked Sales and Final Sales." />
         <PowerBICard title="Total Expenses" value={formatMoney(totalExpenses.current)} variance={formatMoney(totalExpenses.current - totalExpenses.prior)} status={Math.abs(totalExpenses.current) <= Math.abs(totalExpenses.prior) ? 'positive' : 'negative'} subtitle="Illustrative expense structure" tooltip="Total expenses included in operating results for the selected period." />
         <PowerBICard title="Operating Income" value={formatMoney(operatingIncome.current)} variance={formatMoney(operatingIncome.current - operatingIncome.prior)} status={operatingIncome.current >= operatingIncome.prior ? 'positive' : 'negative'} subtitle="Financial statement subtotal" tooltip="Operating profit before other income and expense." />
         <PowerBICard title="Net Income" value={formatMoney(netIncome.current)} variance={formatMoney(netIncome.current - netIncome.prior)} status={netIncome.current >= netIncome.prior ? 'positive' : 'negative'} subtitle="Bottom-line income" tooltip="Income after operating and other income and expense." />
+        <PowerBICard title="Estimated EBITDA" value={formatMoney(estimatedEbitda.current)} variance={formatMoney(estimatedEbitda.current - estimatedEbitda.prior)} status={estimatedEbitda.current >= estimatedEbitda.prior ? 'positive' : 'negative'} subtitle="Before BT adjustments" tooltip="Basic EBITDA estimate: Net Income plus interest, taxes, depreciation, and amortization. Baker Tilley standard EBITDA adjustments are pending and not yet included." />
+        <PowerBICard title="Final Sales" value={formatMoney(qualifyingFinalSales)} variance={`${qualifyingFinalSalesDeals.length} qualifying deals`} status="neutral" subtitle={`RP ${formatMoney(rpFinalSales)} / Sales Lead ${formatMoney(salesLeadFinalSales)}`} tooltip="Qualifying Final Sales from RP deals with an RP code present and Sales Lead deals with Sales Lead present. Click to drill into deal detail." onClick={() => setShowFinalSalesDrillDown(true)} />
       </div>
-      <ProfitAndLossTable title="Income Statement Matrix" subtitle="Illustrative account hierarchy pending QuickBooks mapping" rows={profitAndLossRows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
+      <ProfitAndLossTable title="Income Statement Matrix" subtitle="Illustrative account hierarchy pending QuickBooks mapping" rows={profitAndLossRows} expandedRows={expandedRows} onToggle={toggleExpandedRow} onDrillDown={openDrillDown} />
       <div className="grid grid-cols-3 gap-3">
-        <FinanceTable title="Earned Revenue by Source" subtitle="Earned Revenue source labels are placeholders pending Finance confirmation" columns={['Source', 'Current Period', 'Prior Period', 'Dollar Variance']} rows={sourceRevenueRows} />
-        <FinanceTable title="Expenses by Department" subtitle="Illustrative allocation pending Finance confirmation" columns={['Department', 'Current Period', 'Prior Period', 'Dollar Variance']} rows={departmentExpenseTableRows} />
-        <ChartCard title="Earned Revenue and Expense Trend" subtitle="GAAP Earned Revenue and expenses by month" height={180}>
-          <LineChart data={selectedMonthlyFinance} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+        <FinanceTable title="Earned Revenue by Source" subtitle="Earned Revenue source labels are placeholders pending Finance confirmation" columns={['Source', 'Current Period', 'Prior Period', 'Variance ($)']} rows={sourceRevenueRows} onDrillDown={openDrillDown} />
+        <FinanceTable title="Expenses by Department" subtitle="Illustrative allocation pending Finance confirmation" columns={['Department', 'Current Period', 'Prior Period', 'Variance ($)']} rows={departmentExpenseTableRows} onDrillDown={openDrillDown} />
+        <ChartCard title="Earned Revenue and Expense Trend" subtitle="Actual GAAP Earned Revenue and expenses vs forecast by month" height={180}>
+          <ComposedChart data={selectedTrend} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
             <XAxis dataKey="month" tick={chartText} />
             <YAxis tick={chartText} tickFormatter={moneyAxis} />
             <Tooltip contentStyle={{ fontFamily: 'Source Sans 3, sans-serif' }} formatter={moneyTip} />
             <Legend wrapperStyle={chartText} />
-            <Line type="monotone" dataKey="earnedRevenue" stroke="#3D654D" strokeWidth={2} name="Earned Revenue" />
-            <Line type="monotone" dataKey="expenses" stroke="#D5741C" strokeWidth={2} name="Expenses" />
-          </LineChart>
+            <Bar dataKey="earnedRevenue" fill="#358540" name="Earned Revenue" />
+            <Bar dataKey="expenses" fill="#D5741C" name="Expenses" />
+            <Line type="monotone" dataKey="forecastRevenue" stroke="#173B2B" strokeWidth={2.5} dot={{ r: 3 }} name="Forecast Revenue" />
+            <Line type="monotone" dataKey="forecastExpenses" stroke="#7C2D12" strokeWidth={2.5} dot={{ r: 3 }} name="Forecast Expenses" />
+          </ComposedChart>
         </ChartCard>
       </div>
+      {drillDown && <DrillDownPanel request={drillDown} rows={drillDownRows} onClose={() => setDrillDown(null)} />}
+      {showFinalSalesDrillDown && <FinalSalesDrillDownPanel deals={qualifyingFinalSalesDeals} selectedPeriod={selectedPeriodLabel(dateRange)} onClose={() => setShowFinalSalesDrillDown(false)} />}
     </PageShell>
   );
 }
