@@ -69,7 +69,8 @@ This document separates confirmed Finance Reporting requirements from mockup ass
   - Missing Stage Date
   - CRM or Operational-to-General-Ledger Mismatch
   - Historical-Period Change
-- Show Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, and Historical-Period Changes.
+  - RP Code Added Late
+- Show Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes, and RP Code Added Late.
 - Show a compact exception summary table and read-only exception detail table.
 - Provide read-only exception detail through drillthrough, paginated report, or Export Data.
 

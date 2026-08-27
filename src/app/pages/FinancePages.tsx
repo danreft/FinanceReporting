@@ -150,15 +150,19 @@ function FinanceTable({
   columns,
   rows,
   onDrillDown,
+  drillDownCells = [],
 }: {
   title: string;
   subtitle?: string;
   columns: string[];
   rows: (string | number)[][];
   onDrillDown?: (rowLabel: string, column: string, value: number, sourceTitle: string) => void;
+  drillDownCells?: { rowLabel: string; column: string }[];
 }) {
   const numericColumn = (column: string) =>
     column !== columns[0] && (/amount|value|dollars|sales|revenue|period|variance|impact/i.test(column));
+  const isDrillDownCell = (rowLabel: string, column: string) =>
+    isPeriodDrillDownColumn(column) || drillDownCells.some((cell) => cell.rowLabel === rowLabel && cell.column === column);
   const compactPeriodTable = columns.length === 4 && columns.includes('Current Period') && columns.includes('Prior Period');
   const columnWidth = (index: number) => {
     if (!compactPeriodTable) return undefined;
@@ -187,7 +191,7 @@ function FinanceTable({
             <tr key={rowIndex} className="border-b border-[#E6EEE7] last:border-0">
               {row.map((cell, cellIndex) => (
                 <td key={`${rowIndex}-${cellIndex}`} className={`${numericColumn(columns[cellIndex]) ? 'text-right' : 'text-left'} py-1 pr-2 text-[#1A1A1A] ${compactPeriodTable && cellIndex === 0 ? 'whitespace-normal break-words' : 'whitespace-nowrap overflow-hidden text-ellipsis'}`}>
-                  {onDrillDown && typeof cell === 'number' && isPeriodDrillDownColumn(columns[cellIndex]) ? (
+                  {onDrillDown && typeof cell === 'number' && isDrillDownCell(String(row[0]), columns[cellIndex]) ? (
                     <button
                       type="button"
                       onClick={() => onDrillDown(String(row[0]), columns[cellIndex], cell, title)}
@@ -265,6 +269,7 @@ type DrillDownDetailRow = {
 };
 
 type FinalSalesDeal = (typeof financeDeals)[number];
+type ControlException = (typeof controlExceptions)[number];
 
 type StatementRow = {
   id: string;
@@ -398,6 +403,52 @@ function buildFinancialDrillDownRows(request: DrillDownRequest, periodMonths: st
   });
 }
 
+const currentCashAccounts = [
+  { account: '1001236', description: 'Current cash account 1001236', weight: 0.34 },
+  { account: '1001237', description: 'Current cash account 1001237', weight: 0.29 },
+  { account: '100200', description: 'Current cash account 100200', weight: 0.22 },
+  { account: '1002500', description: 'Current cash account 1002500', weight: 0.15 },
+];
+
+function buildCurrentCashDrillDownRows(value: number, periodMonths: string[], periodLabel: string): DrillDownDetailRow[] {
+  const monthsForRows = periodMonths.length ? periodMonths : ['Jun'];
+  const month = monthsForRows[monthsForRows.length - 1];
+  const monthIndex = months.indexOf(month);
+  const monthNumber = String(monthIndex + 1).padStart(2, '0');
+  const monthEndDay = new Date(2026, monthIndex + 1, 0).getDate();
+  const firstAmounts = currentCashAccounts.slice(0, -1).map((account) => Math.round(value * account.weight));
+  const allocated = firstAmounts.reduce((total, amount) => total + amount, 0);
+  const amounts = [...firstAmounts, value - allocated];
+
+  return currentCashAccounts.map((account, index) => ({
+    period: periodLabel,
+    postingDate: `2026-${monthNumber}-${String(monthEndDay).padStart(2, '0')}`,
+    account: account.account,
+    description: account.description,
+    amount: amounts[index],
+  }));
+}
+
+function buildVendorPayablesDrillDownRows(value: number, periodMonths: string[], periodLabel: string): DrillDownDetailRow[] {
+  const monthsForRows = periodMonths.length ? periodMonths : ['Jun'];
+  const month = monthsForRows[monthsForRows.length - 1];
+  const monthIndex = months.indexOf(month);
+  const monthNumber = String(monthIndex + 1).padStart(2, '0');
+  const monthEndDay = new Date(2026, monthIndex + 1, 0).getDate();
+  const totalVendorSpend = vendors.reduce((total, [, spend]) => total + Number(spend), 0);
+  const firstAmounts = vendors.slice(0, -1).map(([, spend]) => Math.round(value * (Number(spend) / totalVendorSpend)));
+  const allocated = firstAmounts.reduce((total, amount) => total + amount, 0);
+  const amounts = [...firstAmounts, value - allocated];
+
+  return vendors.map(([vendor], index) => ({
+    period: periodLabel,
+    postingDate: `2026-${monthNumber}-${String(monthEndDay).padStart(2, '0')}`,
+    account: String(vendor),
+    description: 'Open vendor payable',
+    amount: amounts[index],
+  }));
+}
+
 function DrillDownPanel({
   request,
   rows,
@@ -520,6 +571,71 @@ function FinalSalesDrillDownPanel({
   );
 }
 
+function ExceptionDrillDownPanel({
+  title,
+  rows,
+  selectedPeriod,
+  onClose,
+}: {
+  title: string;
+  rows: ControlException[];
+  selectedPeriod: string;
+  onClose: () => void;
+}) {
+  const totalImpact = rows.reduce((sum, row) => sum + row.revenueDifference, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6 print:hidden">
+      <div className="w-full max-w-6xl bg-white border border-[#CFD5D0] shadow-xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#CFD5D0] p-4">
+          <div>
+            <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>Exception Drill Down</div>
+            <div className="text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+              {title} / {selectedPeriod}
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="border border-[#CFD5D0] px-3 py-1 text-xs font-semibold text-[#3D654D]">Close</button>
+        </div>
+        <div className="p-4">
+          <table className="w-full border-collapse text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+            <thead>
+              <tr className="border-b border-[#CFD5D0]">
+                {['Exception Type', 'Deal / Project', 'Customer', 'Relevant Stage', 'RP Code', 'RP Code Added', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date'].map((column, index) => (
+                  <th key={column} className={`${index === 7 ? 'text-right' : 'text-left'} py-2 pr-2 font-semibold text-[#006637] whitespace-nowrap`}>{column}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b border-[#E6EEE7] last:border-0">
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.exceptionType}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.dealOrProject}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.customer}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.affectedStage}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{'rpCode' in row ? row.rpCode : 'N/A'}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{'rpCodeAddedAt' in row ? row.rpCodeAddedAt : 'N/A'}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.affectedPeriod}</td>
+                  <td className="py-2 pr-2 text-right text-[#1A1A1A] whitespace-nowrap">{formatMoney(row.revenueDifference)}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.sourceSystem}</td>
+                  <td className="py-2 pr-2 text-[#1A1A1A] whitespace-nowrap">{row.detectedDate}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={7} className="py-2 pr-2 text-right font-semibold text-[#006637]">Potential Financial Impact Total</td>
+                <td className="py-2 pr-2 text-right font-semibold text-[#006637] whitespace-nowrap">{formatMoney(totalImpact)}</td>
+                <td colSpan={2} />
+              </tr>
+            </tbody>
+          </table>
+          <div className="mt-3 text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
+            Drilldown is read-only and reflects the active reporting-period and exception-type filters.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BalanceSheetStatementTable({
   title,
   subtitle,
@@ -592,7 +708,10 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
 {
   const dateRange = filters;
   const [topListView, setTopListView] = useState<'customers' | 'vendors'>('customers');
+  const [cashDrillDown, setCashDrillDown] = useState<DrillDownRequest | null>(null);
+  const [vendorPayablesDrillDown, setVendorPayablesDrillDown] = useState<DrillDownRequest | null>(null);
   const currentPeriodLabel = selectedPeriodLabel(dateRange);
+  const selectedMonths = selectedMonthsFor(dateRange);
   const selectedMonthlyFinance = filteredMonthlyFinance(dateRange);
   const selectedTrend = filteredExecutiveTrend(dateRange);
   const trendSubtitle = 'Actual revenue and expenses vs forecast for the selected reporting period';
@@ -644,11 +763,17 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
     ['Expected Near-Term Payments', -685000],
     ['Projected Cash', selectedSummary.cashBalance + 50000],
   ];
+  const currentCashDrillDownRows = cashDrillDown
+    ? buildCurrentCashDrillDownRows(cashDrillDown.value, selectedMonths, currentPeriodLabel)
+    : [];
+  const vendorPayablesDrillDownRows = vendorPayablesDrillDown
+    ? buildVendorPayablesDrillDownRows(vendorPayablesDrillDown.value, selectedMonths, currentPeriodLabel)
+    : [];
   const arApRows = [
     ['Total AR', selectedSummary.accountsReceivable],
     ['Total AP', selectedSummary.accountsPayable],
     ['AR over 90 days', 290000],
-    ['Near-Term AP', 360000],
+    ['Soil Vendor Paybles', 360000],
   ];
 
   return (
@@ -662,7 +787,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
       <div className="grid grid-cols-6 gap-2">
         <PowerBICard title="Booked Sales" value={formatMoney(selectedSummary.bookedSales)} variance="+8.4% vs prior period" status="positive" subtitle={`Booked Acres: ${formatAcres(selectedSummary.bookedAcres)}`} tooltip="Total signed contract value, associated acres, and contract count for agreements fully signed through DocuSign during the selected reporting period." />
         <PowerBICard title="Earned Revenue" value={formatMoney(selectedSummary.earnedRevenue)} variance="+6.1% vs prior period" status="positive" subtitle={`Earned Acres: ${formatAcres(selectedSummary.earnedAcres)}`} tooltip="GAAP-compliant revenue recognized through Signed Agreement, Soil Data Collection Complete, and Report Complete." />
-        <PowerBICard title="Final Sales" value={formatMoney(selectedSummary.finalSales)} variance="+$891K vs prior period" status="neutral" subtitle="Paid Account deals" tooltip="Value of accounts for which the full customer balance has been collected and the deal has reached Paid Account." />
+        <PowerBICard title="Final Sales" value={formatMoney(selectedSummary.finalSales)} variance="+$891K vs prior period" status="neutral" subtitle={`Final Acres: ${formatAcres(selectedSummary.finalAcres)}`} tooltip="Value of accounts for which the full customer balance has been collected and the deal has reached Paid Account." />
         <PowerBICard title="Free Cash Flow" value={formatMoney(selectedSummary.freeCashFlow)} variance="+$42K vs prior period" status="positive" subtitle="Operating less investing cash flow" tooltip="Operating cash flow less capital spend for the selected period." />
         <PowerBICard title="Accounts Receivable" value={formatMoney(selectedSummary.accountsReceivable)} variance="+$74K vs prior period" status="negative" subtitle="Open customer balances" tooltip="Open customer invoice balances outstanding at period end." />
         <PowerBICard title="Accounts Payable" value={formatMoney(selectedSummary.accountsPayable)} variance="-$38K vs prior period" status="positive" subtitle="Open vendor obligations" tooltip="Open vendor obligations expected to be paid from available cash." />
@@ -684,8 +809,21 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
         </ChartCard>
         </div>
         <div className="space-y-2">
-          <FinanceTable title="Basic Cash Outlook" subtitle="Illustrative pending Finance approval" columns={['Cash Outlook', 'Amount']} rows={cashOutlookRows} />
-          <FinanceTable title="AR and AP Relationship" columns={['AR/AP', 'Amount']} rows={arApRows} />
+          <FinanceTable
+            title="Basic Cash Outlook"
+            subtitle="Illustrative pending Finance approval"
+            columns={['Cash Outlook', 'Amount']}
+            rows={cashOutlookRows}
+            onDrillDown={(rowLabel, column, value, sourceTitle) => setCashDrillDown({ rowLabel, column, value, sourceTitle })}
+            drillDownCells={[{ rowLabel: 'Current Cash', column: 'Amount' }]}
+          />
+          <FinanceTable
+            title="AR and AP Relationship"
+            columns={['AR/AP', 'Amount']}
+            rows={arApRows}
+            onDrillDown={(rowLabel, column, value, sourceTitle) => setVendorPayablesDrillDown({ rowLabel, column, value, sourceTitle })}
+            drillDownCells={[{ rowLabel: 'Soil Vendor Paybles', column: 'Amount' }]}
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -740,6 +878,8 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
         </div>
       </div>
       <div className="text-[11px] text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>Illustrative mock data for requirements validation.</div>
+      {cashDrillDown && <DrillDownPanel request={cashDrillDown} rows={currentCashDrillDownRows} onClose={() => setCashDrillDown(null)} />}
+      {vendorPayablesDrillDown && <DrillDownPanel request={vendorPayablesDrillDown} rows={vendorPayablesDrillDownRows} onClose={() => setVendorPayablesDrillDown(null)} />}
     </PageShell>
   );
 }
@@ -1077,7 +1217,9 @@ export function BalanceSheet({ filters }: FinancePageProps)
 {
   const dateRange = filters;
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'currentAssets', 'liabilities', 'currentLiabilities', 'equity']));
-  const selectedMonth = selectedMonthsFor(dateRange)[selectedMonthsFor(dateRange).length - 1];
+  const selectedMonths = selectedMonthsFor(dateRange);
+  const [vendorPayablesDrillDown, setVendorPayablesDrillDown] = useState<DrillDownRequest | null>(null);
+  const selectedMonth = selectedMonths[selectedMonths.length - 1];
   const selectedTrendPoint = balanceSheetTrend.find((item) => item.month === selectedMonth) ?? balanceSheetTrend[balanceSheetTrend.length - 1];
   const priorTrendPoint = balanceSheetTrend[Math.max(balanceSheetTrend.findIndex((item) => item.month === selectedTrendPoint.month) - 1, 0)] ?? selectedTrendPoint;
   const baseCurrentAssets = balanceSheetStatement.current.cash + balanceSheetStatement.current.accountsReceivable + balanceSheetStatement.current.unbilledRevenue + balanceSheetStatement.current.otherCurrentAssets;
@@ -1131,7 +1273,10 @@ export function BalanceSheet({ filters }: FinancePageProps)
   const currentPeriodEarnings = totalEquity - contributedCapital - retainedEarnings;
   const priorCurrentPeriodEarnings = priorTotalEquity - priorContributedCapital - priorRetainedEarnings;
   const overdueAr = 290000;
-  const upcomingAp = 360000;
+  const vendorPayables = 360000;
+  const vendorPayablesDrillDownRows = vendorPayablesDrillDown
+    ? buildVendorPayablesDrillDownRows(vendorPayablesDrillDown.value, selectedMonths, selectedPeriodLabel(dateRange))
+    : [];
   const balanceDifference = totalAssets - (totalLiabilities + totalEquity);
   const rows: StatementRow[] = [
     {
@@ -1148,7 +1293,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
           children: [
             { id: 'cash', label: 'Cash and Cash Equivalents', current: cash, prior: priorCash },
             { id: 'accountsReceivable', label: 'Accounts Receivable', current: accountsReceivable, prior: priorAccountsReceivable },
-            { id: 'unbilledRevenue', label: '112500 - Unbilled Revenue', current: unbilledRevenue, prior: priorUnbilledRevenue },
+            { id: 'unbilledRevenue', label: 'Unbilled Revenue', current: unbilledRevenue, prior: priorUnbilledRevenue },
             { id: 'otherCurrentAssets', label: 'Other Current Assets', current: otherCurrentAssets, prior: priorOtherCurrentAssets },
           ],
         },
@@ -1168,7 +1313,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
           prior: priorCurrentLiabilities,
           children: [
             { id: 'accountsPayable', label: 'Accounts Payable', current: accountsPayable, prior: priorAccountsPayable },
-            { id: 'customerDeposits', label: '210200 - Customer Deposits', current: customerDeposits, prior: priorCustomerDeposits },
+            { id: 'customerDeposits', label: 'Customer Deposits', current: customerDeposits, prior: priorCustomerDeposits },
             { id: 'accruedLiabilities', label: 'Accrued Liabilities', current: accruedLiabilities, prior: priorAccruedLiabilities },
           ],
         },
@@ -1210,12 +1355,19 @@ export function BalanceSheet({ filters }: FinancePageProps)
       </div>
       <BalanceSheetStatementTable title="Balance Sheet Matrix" subtitle="Illustrative Assets, Liabilities, and Equity hierarchy pending final QuickBooks mapping" rows={rows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
       <div className="grid grid-cols-2 gap-3">
-        <FinanceTable title="AR and AP Relationship" subtitle="Open receivables and payables summary" columns={['AR and AP Relationship', 'Amount']} rows={[
-          ['Total AR', accountsReceivable],
-          ['Total AP', accountsPayable],
-          ['AR over 90 days', overdueAr],
-          ['Near-Term AP', upcomingAp],
-        ]} />
+        <FinanceTable
+          title="AR and AP Relationship"
+          subtitle="Open receivables and payables summary"
+          columns={['AR and AP Relationship', 'Amount']}
+          rows={[
+            ['Total AR', accountsReceivable],
+            ['Total AP', accountsPayable],
+            ['AR over 90 days', overdueAr],
+            ['Soil Vendor Paybles', vendorPayables],
+          ]}
+          onDrillDown={(rowLabel, column, value, sourceTitle) => setVendorPayablesDrillDown({ rowLabel, column, value, sourceTitle })}
+          drillDownCells={[{ rowLabel: 'Soil Vendor Paybles', column: 'Amount' }]}
+        />
         <div className="self-start bg-white border border-[#CFD5D0] p-3">
           <div className="flex items-center justify-between gap-3 text-sm" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
             <span className="font-semibold text-[#006637]">Assets = Liabilities + Equity</span>
@@ -1226,6 +1378,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
           </div>
         </div>
       </div>
+      {vendorPayablesDrillDown && <DrillDownPanel request={vendorPayablesDrillDown} rows={vendorPayablesDrillDownRows} onClose={() => setVendorPayablesDrillDown(null)} />}
     </PageShell>
   );
 }
@@ -1288,6 +1441,7 @@ export function ExceptionReporting({ filters }: FinancePageProps)
 {
   const dateRange = filters;
   const [exceptionTypeFilter, setExceptionTypeFilter] = useState('all');
+  const [exceptionDrillDown, setExceptionDrillDown] = useState<{ title: string; exceptionType: string | 'all' } | null>(null);
   const exceptionCategories = [
     'Backward Stage Movement',
     'Missing Stage Date',
@@ -1305,6 +1459,10 @@ export function ExceptionReporting({ filters }: FinancePageProps)
   const missingStageDates = filteredExceptions.filter((item) => item.exceptionType === 'Missing Stage Date').length;
   const glMismatches = filteredExceptions.filter((item) => item.exceptionType === 'CRM or Operational-to-General-Ledger Mismatch').length;
   const historicalPeriodChanges = filteredExceptions.filter((item) => item.exceptionType === 'Historical-Period Change').length;
+  const rpCodeAddedLate = filteredExceptions.filter((item) => item.exceptionType === 'RP Code Added Late').length;
+  const exceptionDrillDownRows = exceptionDrillDown
+    ? filteredExceptions.filter((item) => exceptionDrillDown.exceptionType === 'all' || item.exceptionType === exceptionDrillDown.exceptionType)
+    : [];
   const exceptionTypeOptions = exceptionCategories.map((type) => ({ value: type, label: type }));
   const exceptionSummaryRows = exceptionTypeOptions.map((option) => {
     const records = filteredExceptions.filter((item) => item.exceptionType === option.value);
@@ -1333,12 +1491,13 @@ export function ExceptionReporting({ filters }: FinancePageProps)
       selectedPeriod={selectedPeriodLabel(dateRange)}
       exportContext={`Read-only exception report. Reporting Period=${selectedPeriodLabel(dateRange)}; Exception Type=${exceptionTypeFilter}. Customer and Source System belong in the Power BI filter pane. Interactions: read-only drillthrough to exception detail, Export Data, and Export to PDF. The report does not resolve, assign, or edit exceptions in Power BI. Filtered exceptions: ${filteredExceptions.length}.`}
     >
-      <div className="grid grid-cols-5 gap-3">
-        <PowerBICard title="Open Exceptions" value={filteredExceptions.length} status={filteredExceptions.length > 0 ? 'negative' : 'positive'} subtitle="Read-only exception count" tooltip="Open revenue-recognition and financial data exceptions in the selected view." />
-        <PowerBICard title="Deals Moved Backward" value={backwardStageMovements} subtitle="Backward Stage Movement" status={backwardStageMovements > 0 ? 'negative' : 'positive'} tooltip="Deals where a revenue-recognition stage moved backward after being recorded." />
-        <PowerBICard title="Missing Stage Dates" value={missingStageDates} subtitle="Missing Stage Date" status={missingStageDates > 0 ? 'negative' : 'positive'} tooltip="Records missing a required stage date." />
-        <PowerBICard title="General-Ledger Mismatches" value={glMismatches} subtitle="CRM or Operational-to-GL" status={glMismatches > 0 ? 'negative' : 'positive'} tooltip="Operational Earned Revenue not matching general-ledger revenue." />
-        <PowerBICard title="Historical-Period Changes" value={historicalPeriodChanges} subtitle="Historical-Period Change" status={historicalPeriodChanges > 0 ? 'negative' : 'positive'} tooltip="Revenue-recognition records changed after a prior period close." />
+      <div className="grid grid-cols-6 gap-3">
+        <PowerBICard title="Open Exceptions" value={filteredExceptions.length} status={filteredExceptions.length > 0 ? 'negative' : 'positive'} subtitle="Read-only exception count" tooltip="Open revenue-recognition and financial data exceptions in the selected view. Click to drill into detail." onClick={() => setExceptionDrillDown({ title: 'Open Exceptions', exceptionType: 'all' })} />
+        <PowerBICard title="Deals Moved Backward" value={backwardStageMovements} subtitle="Backward Stage Movement" status={backwardStageMovements > 0 ? 'negative' : 'positive'} tooltip="Deals where a revenue-recognition stage moved backward after being recorded. Click to drill into detail." onClick={() => setExceptionDrillDown({ title: 'Deals Moved Backward', exceptionType: 'Backward Stage Movement' })} />
+        <PowerBICard title="Missing Stage Dates" value={missingStageDates} subtitle="Missing Stage Date" status={missingStageDates > 0 ? 'negative' : 'positive'} tooltip="Records missing a required stage date. Click to drill into detail." onClick={() => setExceptionDrillDown({ title: 'Missing Stage Dates', exceptionType: 'Missing Stage Date' })} />
+        <PowerBICard title="General-Ledger Mismatches" value={glMismatches} subtitle="CRM or Operational-to-GL" status={glMismatches > 0 ? 'negative' : 'positive'} tooltip="Operational Earned Revenue not matching general-ledger revenue. Click to drill into detail." onClick={() => setExceptionDrillDown({ title: 'General-Ledger Mismatches', exceptionType: 'CRM or Operational-to-General-Ledger Mismatch' })} />
+        <PowerBICard title="Historical-Period Changes" value={historicalPeriodChanges} subtitle="Historical-Period Change" status={historicalPeriodChanges > 0 ? 'negative' : 'positive'} tooltip="Revenue-recognition records changed after a prior period close. Click to drill into detail." onClick={() => setExceptionDrillDown({ title: 'Historical-Period Changes', exceptionType: 'Historical-Period Change' })} />
+        <PowerBICard title="RP Code Added Late" value={rpCodeAddedLate} subtitle="RP Code Added Late" status={rpCodeAddedLate > 0 ? 'negative' : 'positive'} tooltip="Deals where an RP Code was added after the deal entered DocuSign stage or later in the process. Click to drill into detail." onClick={() => setExceptionDrillDown({ title: 'RP Code Added Late', exceptionType: 'RP Code Added Late' })} />
       </div>
       <div className="bg-white border border-[#CFD5D0] p-4">
         <div className="grid grid-cols-1 gap-3">
@@ -1347,6 +1506,14 @@ export function ExceptionReporting({ filters }: FinancePageProps)
       </div>
       <FinanceTable title="Exception Summary" subtitle="Potential Financial Impact pending calculation definition" columns={['Exception Type', 'Record Count', 'Potential Financial Impact']} rows={exceptionSummaryRows} />
       <FinanceTable title="Exception Detail" subtitle="Read-only table; customer and source system filters belong in the Power BI filter pane" columns={['Exception Type', 'Deal / Project', 'Customer', 'Relevant Stage', 'RP Code', 'RP Code Added', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date']} rows={exceptionDetailRows} />
+      {exceptionDrillDown && (
+        <ExceptionDrillDownPanel
+          title={exceptionDrillDown.title}
+          rows={exceptionDrillDownRows}
+          selectedPeriod={selectedPeriodLabel(dateRange)}
+          onClose={() => setExceptionDrillDown(null)}
+        />
+      )}
     </PageShell>
   );
 }

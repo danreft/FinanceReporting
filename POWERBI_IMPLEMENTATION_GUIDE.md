@@ -135,10 +135,10 @@ The mockups include illustrative values only where needed to demonstrate reporti
 ### Exception Reporting
 
 - Page purpose: read-only monitoring of revenue recognition and financial data exceptions.
-- Required exception types: Backward Stage Movement, Missing Stage Date, CRM or Operational-to-General-Ledger Mismatch, Historical-Period Change.
+- Required exception types: Backward Stage Movement, Missing Stage Date, CRM or Operational-to-General-Ledger Mismatch, Historical-Period Change, RP Code Added Late.
 - Required visible slicers: shared header Reporting Period and Revenue Source, plus page-level Exception Type.
 - Filter pane fields: customer and source system where applicable.
-- KPI visuals: Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes.
+- KPI visuals: Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes, RP Code Added Late.
 - Chart types: none in the simplified Exception Reporting page.
 - Table or matrix requirements: compact exception summary table and read-only exception detail table on the primary page.
 - Drillthrough pages: read-only exception detail page where supported by the model.
@@ -150,7 +150,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 - Paginated report candidates: exception detail export.
 - Custom visual requirements: none.
 - Known limitations: Potential Financial Impact calculation definition is pending. The report must not imply exceptions can be resolved, assigned, noted, statused, or edited in Power BI. Proactive alerts may require Power Automate, Fabric, or data-pipeline monitoring outside the report.
-- Required measures: Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes, Potential Financial Impact pending definition.
+- Required measures: Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes, RP Code Added Late, Potential Financial Impact pending definition.
 - Likely source systems: CRM, operational stage system, revenue recognition model, general ledger, source-system detail links.
 
 ## Visual Inventory
@@ -162,7 +162,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 | Executive Snapshot | KPI row | Executive finance summary | Card/KPI visuals | Native | Tooltip and slicers | Booked Sales, Earned Revenue, Final Sales, FCF, AR, AP | Conditional variance formatting | Fully Replicable |
 | Executive Snapshot | Earned Revenue and Expense Trend | Period-over-period view | Clustered column chart | Native | Cross-filtering | Earned Revenue, Expenses, Prior Period | Include variance tooltip | Fully Replicable |
 | Executive Snapshot | Basic Cash Outlook | Illustrative cash outlook | Table visual | Native | Tooltip | Current Cash, Expected Customer Collections, Expected Near-Term Payments, Projected Cash | Illustrative pending Finance confirmation; no forecast model or assumption controls | Fully Replicable |
-| Executive Snapshot | AR/AP Relationship | AR/AP relationship | Table visual | Native | Cross-filtering | Total AR, Total AP, AR over 90 days, Near-Term AP | Summary relationship only | Fully Replicable |
+| Executive Snapshot | AR/AP Relationship | AR/AP relationship | Table visual | Native | Cross-filtering | Total AR, Total AP, AR over 90 days, Vendor Payables | Summary relationship only | Fully Replicable |
 | Executive Snapshot | Top Customers/Vendors | Concentration review | Table visual | Native | Bookmark toggle or drillthrough | Amount, Percent of Total | Full list can be detail page | Fully Replicable |
 | Executive Snapshot | Booked Sales/Earned Revenue/Final Sales comparison | Process-stage comparison | Table visual | Native | Cross-filtering | Dollars, Acres, Contracts | Show standardized finance metrics together | Fully Replicable |
 | Income Statement | KPI cards | P&L summary | Card/KPI visuals | Native | Tooltip | Revenue, Expenses, Income | Favorable/unfavorable variance | Fully Replicable |
@@ -173,7 +173,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 | Income Statement | Future Phase — Pending Scope Confirmation | RP/RPM scope marker | Text note | Native | None | None | No detailed RP or RPM profitability calculations in this mockup | Fully Replicable |
 | Balance Sheet | KPI cards | Financial position summary | Card/KPI visuals | Native | Tooltip | Assets, Liabilities, Equity, Cash | Variance formatting | Fully Replicable |
 | Balance Sheet | Balance Sheet table | Statement of financial position | Matrix visual | Native | Expand/collapse | Current, Prior, Variance | Illustrative hierarchy pending final QuickBooks mapping | Fully Replicable |
-| Balance Sheet | AR/AP relationship | Receivable and payable relationship | Table visual | Native | Cross-filtering | AR, AP, AR over 90 days, Near-Term AP | Summary relationship only | Fully Replicable |
+| Balance Sheet | AR/AP relationship | Receivable and payable relationship | Table visual | Native | Cross-filtering | AR, AP, AR over 90 days, Vendor Payables | Summary relationship only | Fully Replicable |
 | Balance Sheet | Balance validation | Validate Assets = Liabilities + Equity | Text statement | Native | None | Balance validation | Informational statement only | Fully Replicable |
 | Cash Flow | KPI cards | Cash flow summary | Card/KPI visuals | Native | Tooltip | Ending Cash, Net Change in Cash, FCF | Free Cash Flow definition pending Finance confirmation | Fully Replicable |
 | Cash Flow | Statement table | Cash flow statement | Matrix visual | Native | Expand/collapse | Actual Amount | Operating/investing/financing hierarchy | Fully Replicable |
@@ -183,7 +183,7 @@ The mockups include illustrative values only where needed to demonstrate reporti
 | Revenue Recognition | Stage and period summary | Monthly stage distribution | Chart/table visual | Native | Chart/table selector and cross-filtering | Dollars, Acres | Uses only the three approved stages | Fully Replicable |
 | Revenue Recognition | Reconciliation summary | Compare CRM and GL earned revenue amounts | Table visual | Native | Drillthrough | CRM Earned Revenue, General Ledger Earned Revenue, Variance | Deal-level drillthrough | Replicable with Drillthrough |
 | Revenue Recognition | Detailed audit table | Traceability by contract | Drillthrough or paginated report | Native | Drillthrough/export | Contract/deal, customer, total contract value, acres, stage dates, stage amounts, total Earned Revenue, GL amount, reconciliation result | Moved off primary page | Paginated Report Recommended |
-| Exception Reporting | KPI cards | Exception monitoring summary | Card/KPI visuals | Native | Tooltip | Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes | Read-only summary | Fully Replicable |
+| Exception Reporting | KPI cards | Exception monitoring summary | Card/KPI visuals | Native | Tooltip and read-only drillthrough | Open Exceptions, Deals Moved Backward, Missing Stage Dates, General-Ledger Mismatches, Historical-Period Changes, RP Code Added Late | Read-only summary | Fully Replicable |
 | Exception Reporting | Exception summary | Exception counts and impact | Table visual | Native | Cross-filtering | Record Count, Potential Financial Impact | Potential Financial Impact pending calculation definition | Fully Replicable |
 | Exception Reporting | Exception detail table | Read-only exception register | Table plus drillthrough table | Native | Export Data and read-only drillthrough | Exception Type, Deal or Project, Customer, Affected Period, Potential Financial Impact, Source System, Detected Date | No assignment, resolution, notes, status workflow, or action buttons | Replicable with Drillthrough |
 
