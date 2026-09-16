@@ -1206,7 +1206,6 @@ export function RevenueRecognition({ filters }: FinancePageProps)
           ['General Ledger Earned Revenue', generalLedgerRevenue],
           ['Variance', reconciliationVariance],
           ['Unmatched Records', unmatchedRecords],
-          ['Last Reconciliation Date', '2026-06-30'],
         ]} />
       </div>
     </PageShell>
