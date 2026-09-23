@@ -17,6 +17,7 @@ import PowerBISlicer from '../components/PowerBISlicer';
 import {
   balanceSheetStatement,
   balanceSheetTrend,
+  cashFlowOutlook,
   controlExceptions,
   earnedForFinanceDeal,
   executiveTrend,
@@ -706,7 +707,6 @@ function BalanceSheetStatementTable({
 export function ExecutiveSnapshot({ filters }: FinancePageProps)
 {
   const dateRange = filters;
-  const [forecastDays, setForecastDays] = useState(14);
   const [topListView, setTopListView] = useState<'customers' | 'vendors'>('customers');
   const [cashDrillDown, setCashDrillDown] = useState<DrillDownRequest | null>(null);
   const [vendorPayablesDrillDown, setVendorPayablesDrillDown] = useState<DrillDownRequest | null>(null);
@@ -757,12 +757,11 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
     ['Earned Revenue', selectedSummary.earnedRevenue, selectedSummary.earnedAcres, dealsWithEarnedStage.length],
     ['Final Sales', selectedSummary.finalSales, selectedSummary.finalAcres, finalDeals.length],
   ];
-  // Forecast source mapping remains unresolved. Keep the proposed layout without presenting invented cash projections.
   const cashOutlookRows = [
-    ['Current Cash (mock snapshot)', financeSummary.cashBalance],
-    ['Expected Customer Collections', 'Pending source mapping'],
-    ['Scheduled Payables', 'Pending Ramp / QBO validation'],
-    ['Projected Cash', 'Pending source mapping'],
+    ['Current Cash', selectedSummary.cashBalance],
+    ['Expected Customer Collections', 735000],
+    ['Scheduled Payables', -685000],
+    ['Projected Cash', selectedSummary.cashBalance + 50000],
   ];
   const currentCashDrillDownRows = cashDrillDown
     ? buildCurrentCashDrillDownRows(cashDrillDown.value, selectedMonths, currentPeriodLabel)
@@ -782,7 +781,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
       title="Executive Snapshot"
       subtitle="Executive financial overview for the selected reporting period."
       selectedPeriod={currentPeriodLabel}
-      exportContext="Presentation-friendly export: six KPI cards, trend, cash outlook design pending forecast data, AR/AP relationship, top 10 list, and Booked Sales / Earned Revenue / Final Sales comparison."
+      exportContext="Presentation-friendly export: six KPI cards, trend, illustrative basic cash outlook, AR/AP relationship, top 10 list, and Booked Sales / Earned Revenue / Final Sales comparison."
       canvasClassName="fixed-report-canvas space-y-2"
     >
       <div className="grid grid-cols-6 gap-2">
@@ -810,15 +809,14 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
         </ChartCard>
         </div>
         <div className="space-y-2">
-          <div className="bg-white border border-[#CFD5D0] p-3">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>Cash Outlook</div>
-              <label className="text-xs text-[#3D654D]">Forecast days <input type="number" min={1} max={90} value={forecastDays} onChange={(event) => setForecastDays(Math.min(90, Math.max(1, Number(event.target.value) || 1)))} className="w-14 ml-1 border border-[#CFD5D0] px-1 py-0.5 text-right" /></label>
-            </div>
-            <div className="text-xs text-[#3D654D] mb-2">Current-date design · next {forecastDays} days · calculations pending source validation</div>
-            <FinanceTable title="Projected Cash" columns={['Cash Outlook', 'Amount']} rows={cashOutlookRows} onDrillDown={(rowLabel, column, value, sourceTitle) => setCashDrillDown({ rowLabel, column, value, sourceTitle })} drillDownCells={[{ rowLabel: 'Current Cash (mock snapshot)', column: 'Amount' }]} />
-            <div className="text-[11px] text-[#3D654D] mt-2">Projected Cash = Current Cash + Expected Customer Collections − Scheduled Payables. Confirm Ramp or QBO due dates and Soil Vendor Payables treatment.</div>
-          </div>
+          <FinanceTable
+            title="Cash Outlook"
+            subtitle="Illustrative pending Finance approval"
+            columns={['Cash Outlook', 'Amount']}
+            rows={cashOutlookRows}
+            onDrillDown={(rowLabel, column, value, sourceTitle) => setCashDrillDown({ rowLabel, column, value, sourceTitle })}
+            drillDownCells={[{ rowLabel: 'Current Cash', column: 'Amount' }]}
+          />
           <FinanceTable
             title="AR and AP Relationship"
             columns={['AR/AP', 'Amount']}
@@ -826,11 +824,6 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
             onDrillDown={(rowLabel, column, value, sourceTitle) => setVendorPayablesDrillDown({ rowLabel, column, value, sourceTitle })}
             drillDownCells={[{ rowLabel: 'Soil Vendor Payables', column: 'Amount' }]}
           />
-          <div className="bg-white border border-[#CFD5D0] p-3 text-xs text-[#3D654D]">
-            <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>AR by Invoice Stage</div>
-            <div>First Invoice · Final Invoice · Unmatched</div>
-            <div className="mt-1">Amounts pending CRM Invoice 1/2 to QuickBooks matching. Categories will reconcile to Total AR.</div>
-          </div>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -885,7 +878,6 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
         </div>
       </div>
       <div className="text-[11px] text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>Illustrative mock data for requirements validation.</div>
-      <div className="text-[11px] text-[#3D654D]">Consolidated Iowa + Delaware QuickBooks data and account-level cash mapping are pending. Values shown here are sample data.</div>
       {cashDrillDown && <DrillDownPanel request={cashDrillDown} rows={currentCashDrillDownRows} onClose={() => setCashDrillDown(null)} />}
       {vendorPayablesDrillDown && <DrillDownPanel request={vendorPayablesDrillDown} rows={vendorPayablesDrillDownRows} onClose={() => setVendorPayablesDrillDown(null)} />}
     </PageShell>
@@ -1007,10 +999,10 @@ export function IncomeStatement({ filters }: FinancePageProps)
     ytd: Math.round(totalOperatingExpenses.ytd * item.value / departmentWeight),
     priorYtd: Math.round(totalOperatingExpenses.priorYtd * item.value / departmentWeight),
   }));
-  const departmentRemainder = (key: 'current' | 'prior' | 'ytd' | 'priorYtd') =>
-    totalOperatingExpenses[key] - departmentExpenseRows.reduce((sum, row) => sum + row[key], 0);
-  const finalDepartment = departmentExpenseRows[departmentExpenseRows.length - 1]!;
-  for (const key of ['current', 'prior', 'ytd', 'priorYtd'] as const) finalDepartment[key] += departmentRemainder(key);
+  const lastDepartment = departmentExpenseRows[departmentExpenseRows.length - 1]!;
+  for (const key of ['current', 'prior', 'ytd', 'priorYtd'] as const) {
+    lastDepartment[key] += totalOperatingExpenses[key] - departmentExpenseRows.reduce((sum, row) => sum + row[key], 0);
+  }
   const revenueChildren = [
     { id: 'allSourcesRevenue', label: 'Total Earned Revenue', ...totalRevenue },
     { id: 'directRevenue', label: 'Direct-Sourced Earned Revenue', ...directRevenue },
@@ -1087,39 +1079,9 @@ export function IncomeStatement({ filters }: FinancePageProps)
   );
 }
 
-export function EbitdaDetail({ filters }: FinancePageProps) {
-  const selectedFinance = filteredMonthlyFinance(filters);
-  const selectedTrend = filteredExecutiveTrend(filters);
-  const periodShare = currentMonthCount(filters) / months.length;
-  const otherIncomeAndExpense = incomeStatementRows.find((row) => row[0] === 'Other Income and Expenses')!;
-  const currentNetIncome = selectedFinance.reduce((total, item) => total + item.earnedRevenue - item.expenses, 0) + Math.round(Number(otherIncomeAndExpense[1]) * periodShare);
-  const priorNetIncome = selectedTrend.reduce((total, item) => total + item.priorEarnedRevenue - item.priorExpenses, 0) + Math.round(Number(otherIncomeAndExpense[2]) * periodShare);
-  const addBackNames = ['Interest Expense', 'Income Tax Expense', 'Depreciation Expense', 'Amortization Expense'];
-  const addBackRows = addBackNames.map((name) => {
-    const row = incomeStatementRows.find((item) => item[0] === name)!;
-    return [name, Math.abs(Math.round(Number(row[1]) * periodShare)), Math.abs(Math.round(Number(row[2]) * periodShare))] as [string, number, number];
-  });
-  const currentAddBacks = addBackRows.reduce((total, row) => total + row[1], 0);
-  const priorAddBacks = addBackRows.reduce((total, row) => total + row[2], 0);
-  const rows: (string | number)[][] = [
-    ['Net Income', currentNetIncome, priorNetIncome],
-    ...addBackRows,
-    ['Estimated EBITDA before Baker Tilly adjustments', currentNetIncome + currentAddBacks, priorNetIncome + priorAddBacks],
-    ['Baker Tilly adjustments', 'Pending approved exhibit', 'Pending approved exhibit'],
-    ['Adjusted EBITDA', 'Pending approved exhibit', 'Pending approved exhibit'],
-  ];
-  return (
-    <PageShell title="EBITDA Detail" selectedPeriod={selectedPeriodLabel(filters)} exportContext="Illustrative base EBITDA; Baker Tilly adjustments pending approved exhibit and account mapping.">
-      <div className="text-xs text-[#3D654D]">This page shows the current Income Statement estimate and its standard add-backs. Adjusted EBITDA will be displayed once Finance approves the Baker Tilly exhibit.</div>
-      <FinanceTable title="EBITDA Calculation" subtitle="Illustrative amounts; adjustment lines await Finance approval" columns={['Calculation', 'Current Period', 'Prior Period']} rows={rows} />
-    </PageShell>
-  );
-}
-
 export function RevenueRecognition({ filters }: FinancePageProps)
 {
   const dateRange = filters;
-  const [showAuditDetail, setShowAuditDetail] = useState(false);
   const selectedRecognitionMonths = selectedMonthsFor(dateRange);
   const [stageFilter, setStageFilter] = useState('all');
   const [recognitionMetric, setRecognitionMetric] = useState<MetricMode>('dollars');
@@ -1207,42 +1169,20 @@ export function RevenueRecognition({ filters }: FinancePageProps)
     stage3: stageFilter === 'all' || stageFilter === 'stage3' ? metricValue(recognitionMetric, item.stage3Dollars, item.stage3Acres, item.stage3Contracts) : 0,
   }));
   const periodRows = visiblePeriodData.map((item) => [item.period, item.stage1, item.stage2, item.stage3, item.stage1 + item.stage2 + item.stage3]);
-  const auditRows = filteredDeals.flatMap((deal) => ([
-    [stageNames.stage1, deal.stage1Date],
-    [stageNames.stage2, deal.stage2Date],
-    [stageNames.stage3, deal.stage3Date],
-  ] as const).filter(([, date]) => isRecognitionDateInRange(date)).map(([stage, date]) => [
-    deal.dealId, deal.customer, deal.contractValue, deal.acres, stage, date, stageAmountForFinanceDeal(deal.contractValue),
-  ]));
-  const auditColumns = ['Deal Number', 'Customer', 'Deal Value', 'Acres', 'Recognition Stage', 'Recognition Date', 'Recognized Amount'];
-  const exportAuditDetail = () => {
-    const escapeCsv = (value: string | number) => {
-      const text = String(value);
-      const safe = /^[=+@\-]/.test(text) && typeof value === 'string' ? `'${text}` : text;
-      return `"${safe.replace(/"/g, '""')}"`;
-    };
-    const csv = [auditColumns, ...auditRows].map((row) => row.map(escapeCsv).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'revenue-recognition-audit-detail.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <PageShell
       title="Revenue Recognition"
       subtitle="Stage amounts use one-third mockup logic pending final validation by Finance."
       selectedPeriod={recognitionPeriod}
-      exportContext={`Earned Revenue audit report. Recognition Period: ${recognitionPeriod}. Recognition Stage: ${stageFilter}. Metric: ${recognitionMetric}. Customer, Source, and Reconciliation Result belong in the Power BI filter pane. One-third allocation is a mockup assumption based on the meeting description; final DAX and accounting treatment must be approved by Finance. The Recognized Acres KPI counts each deal's acres once per selected period. Stage-level acres may repeat across stages. Open implementation rules include discounts, change orders, refunds, credits, cancellations, partial acreage changes, reopened accounts, and manual adjustments.`}
+      exportContext={`Earned Revenue audit report. Recognition Period: ${recognitionPeriod}. Recognition Stage: ${stageFilter}. Metric: ${recognitionMetric}. Amounts are illustrative pending Finance validation. Recognized Acres counts each deal once per period; stage acres may repeat.`}
     >
       <div className="grid grid-cols-5 gap-3">
         <PowerBICard title="Total Earned Revenue" value={formatMoney(totalEarnedRevenue)} variance={formatMoney(reconciliationVariance)} status={reconciliationVariance === 0 ? 'positive' : 'negative'} subtitle="Operational stage completion" tooltip="GAAP-compliant revenue recognized when each applicable approved stage is completed." />
         <PowerBICard title="Stage 1 Earned Revenue" value={formatMoney(stageTotals.stage1.revenue)} subtitle={stageNames.stage1} tooltip="Earned Revenue recognized when Stage 1 — Signed Agreement is complete." />
         <PowerBICard title="Stage 2 Earned Revenue" value={formatMoney(stageTotals.stage2.revenue)} subtitle={stageNames.stage2} tooltip="Earned Revenue recognized when Stage 2 — Soil Data Collection Complete is recorded." />
         <PowerBICard title="Stage 3 Earned Revenue" value={formatMoney(stageTotals.stage3.revenue)} subtitle={stageNames.stage3} tooltip="Earned Revenue recognized when Stage 3 — Report Complete is recorded." />
-        <PowerBICard title="Recognized Acres" value={formatAcres(recognizedAcres)} subtitle="Unique acres in period" tooltip="Counts each deal's acres once when it has earned revenue during the selected period, even when multiple stages occur." />
+        <PowerBICard title="Recognized Acres" value={formatAcres(recognizedAcres)} subtitle="Unique acres in period" tooltip="Each deal's acres count once during the selected period, even when multiple stages are completed." />
       </div>
       <div className="bg-white border border-[#CFD5D0] p-4">
         <div className="grid grid-cols-3 gap-3">
@@ -1252,7 +1192,7 @@ export function RevenueRecognition({ filters }: FinancePageProps)
         </div>
       </div>
       <div className="text-[11px] text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
-        Recognized Acres counts unique deal acres for the period. Stage acres show each stage's activity, so adding stage acres can count a deal more than once.
+        Recognized Acres counts each deal once; stage acres show activity at each stage.
       </div>
       <div className="grid grid-cols-2 items-start gap-3">
         {stageView === 'chart' ? (
@@ -1280,19 +1220,6 @@ export function RevenueRecognition({ filters }: FinancePageProps)
           ['Variance', reconciliationVariance],
           ['Unmatched Records', unmatchedRecords],
         ]} />
-      </div>
-      <div className="bg-white border border-[#CFD5D0] p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>Deal-Level Audit Detail</div>
-            <div className="text-xs text-[#3D654D]">{recognitionPeriod} · {auditRows.length} stage events · total {formatMoney(auditRows.reduce((sum, row) => sum + Number(row[6]), 0))} · final audit columns pending Bruce’s review</div>
-          </div>
-          <div className="flex gap-2 print:hidden">
-            <button type="button" onClick={() => setShowAuditDetail(!showAuditDetail)} className="border border-[#CFD5D0] px-3 py-1 text-xs font-semibold text-[#006637]">{showAuditDetail ? 'Hide detail' : 'View detail'}</button>
-            <button type="button" onClick={exportAuditDetail} className="bg-[#006637] px-3 py-1 text-xs font-semibold text-white">Export CSV</button>
-          </div>
-        </div>
-        {showAuditDetail && <div className="mt-3 overflow-x-auto"><FinanceTable title="Revenue Recognition by Deal and Stage" columns={auditColumns} rows={auditRows} /></div>}
       </div>
     </PageShell>
   );
@@ -1353,7 +1280,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
   const priorLongTermLiabilities = priorTotalLiabilities - priorCurrentLiabilities;
   const contributedCapital = Math.round(balanceSheetStatement.current.contributedCapital * equityScale);
   const priorContributedCapital = Math.round(balanceSheetStatement.prior.contributedCapital * priorEquityScale);
-  const distributions = -75000; // Illustrative mock value; Finance account mapping is pending.
+  const distributions = -75000;
   const priorDistributions = -50000;
   const currentPeriodEarnings = Math.round(balanceSheetStatement.current.currentPeriodEarnings * equityScale);
   const priorCurrentPeriodEarnings = Math.round(balanceSheetStatement.prior.currentPeriodEarnings * priorEquityScale);
@@ -1438,7 +1365,7 @@ export function BalanceSheet({ filters }: FinancePageProps)
       <div className="grid grid-cols-4 gap-3">
         <PowerBICard title="Total Assets" value={formatMoney(totalAssets)} variance={formatMoney(totalAssets - priorTotalAssets)} status={totalAssets >= priorTotalAssets ? 'positive' : 'negative'} subtitle="Current Period" tooltip="Total current and long-term assets." />
         <PowerBICard title="Total Liabilities" value={formatMoney(totalLiabilities)} variance={formatMoney(totalLiabilities - priorTotalLiabilities)} status={totalLiabilities <= priorTotalLiabilities ? 'positive' : 'negative'} subtitle="Current Period" tooltip="Total current and long-term liabilities." />
-        <PowerBICard title="Total Equity" value={formatMoney(totalEquity)} variance={formatMoney(totalEquity - priorTotalEquity)} status={totalEquity >= priorTotalEquity ? 'positive' : 'negative'} subtitle="Current Period" tooltip="Contributed capital plus retained and current earnings, less shareholder distributions. Mock distributions await Finance account mapping." />
+        <PowerBICard title="Total Equity" value={formatMoney(totalEquity)} variance={formatMoney(totalEquity - priorTotalEquity)} status={totalEquity >= priorTotalEquity ? 'positive' : 'negative'} subtitle="Current Period" tooltip="Contributed capital and earnings less distributions. Values are illustrative." />
         <PowerBICard title="Cash Balance" value={formatMoney(cash)} variance={formatMoney(cash - priorCash)} status={cash >= priorCash ? 'positive' : 'negative'} subtitle="Cash and Cash Equivalents" tooltip="Cash and cash equivalents at period end." />
       </div>
       <BalanceSheetStatementTable title="Balance Sheet Matrix" subtitle="Illustrative Assets, Liabilities, and Equity hierarchy pending final QuickBooks mapping" rows={rows} expandedRows={expandedRows} onToggle={toggleExpandedRow} />
@@ -1492,6 +1419,9 @@ export function CashFlow({ filters }: FinancePageProps)
     ['Beginning Cash', beginningCash],
     ['Ending Cash', endingCash],
   ];
+  const selectedCashFlowOutlook = cashFlowOutlook.map(([label, amount]) => (
+    label === 'Current Cash' ? [label, endingCash] : [label, amount]
+  ));
 
   return (
     <PageShell
@@ -1507,10 +1437,7 @@ export function CashFlow({ filters }: FinancePageProps)
       </div>
       <FinanceTable title="Statement of Cash Flows" subtitle="Operating, investing, financing, and cash rollforward sections supported by the current mock data" columns={['Statement of Cash Flows', 'Actual Amount']} rows={selectedCashFlowStatementRows} />
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white border border-[#CFD5D0] p-3">
-          <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>Operating Activities by Department</div>
-          <div className="text-xs text-[#3D654D]">Department breakdown pending validation of QuickBooks transaction classifications. Unallocated activity will remain visible and totals will reconcile to Operating Activities.</div>
-        </div>
+        <FinanceTable title="Basic Cash Outlook" subtitle="Basic cash outlook only" columns={['Cash Outlook', 'Amount']} rows={selectedCashFlowOutlook} />
         <ChartCard title="Free Cash Flow Trend" subtitle="Definition pending Finance confirmation." height={240}>
           <LineChart data={selectedCashFlowTrend}>
             <CartesianGrid strokeDasharray="3 3" stroke="#CFD5D0" />
@@ -1572,21 +1499,6 @@ export function ExceptionReporting({ filters }: FinancePageProps)
     item.sourceSystem,
     item.detectedDate,
   ]);
-  const exceptionColumns = ['Exception Type', 'Deal / Project', 'Customer', 'Relevant Stage', 'RP Code', 'RP Code Added', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date'];
-  const exportExceptionDetail = () => {
-    const csvValue = (value: string | number) => {
-      const text = String(value);
-      const safe = typeof value === 'string' && /^[=+@\-]/.test(text) ? `'${text}` : text;
-      return `"${safe.replace(/"/g, '""')}"`;
-    };
-    const csv = [exceptionColumns, ...exceptionDetailRows].map((row) => row.map(csvValue).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'finance-exceptions-detail.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
   return (
     <PageShell
       title="Exception Reporting"
@@ -1608,8 +1520,7 @@ export function ExceptionReporting({ filters }: FinancePageProps)
         </div>
       </div>
       <FinanceTable title="Exception Summary" subtitle="Potential Financial Impact pending calculation definition" columns={['Exception Type', 'Record Count', 'Potential Financial Impact']} rows={exceptionSummaryRows} />
-      <div className="flex items-center justify-end print:hidden"><button type="button" onClick={exportExceptionDetail} className="bg-[#006637] px-3 py-1 text-xs font-semibold text-white">Export filtered detail CSV</button></div>
-      <FinanceTable title="Exception Detail" subtitle="Read-only table; export respects selected reporting period and exception type" columns={exceptionColumns} rows={exceptionDetailRows} />
+      <FinanceTable title="Exception Detail" subtitle="Read-only table; customer and source system filters belong in the Power BI filter pane" columns={['Exception Type', 'Deal / Project', 'Customer', 'Relevant Stage', 'RP Code', 'RP Code Added', 'Affected Period', 'Potential Financial Impact', 'Source System', 'Detected Date']} rows={exceptionDetailRows} />
       {exceptionDrillDown && (
         <ExceptionDrillDownPanel
           title={exceptionDrillDown.title}

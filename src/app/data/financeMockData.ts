@@ -383,7 +383,7 @@ export const executiveTrend = monthlyFinance.map((item) => ({
 export const cashFlowOutlook = [
   ['Current Cash', 1840000],
   ['Expected Customer Collections', 735000],
-  ['Expected Near-Term Payments', -685000],
+  ['Scheduled Payables', -685000],
   ['Projected Cash', 1890000],
 ];
 
