@@ -6,6 +6,7 @@ interface TabNavigationProps {
 const tabs = [
   { id: 'executiveSnapshot', label: 'Executive Snapshot' },
   { id: 'incomeStatement', label: 'Income Statement' },
+  { id: 'ebitdaDetail', label: 'EBITDA Detail' },
   { id: 'balanceSheet', label: 'Balance Sheet' },
   { id: 'cashFlow', label: 'Cash Flow' },
   { id: 'revenueRecognition', label: 'Revenue Recognition' },

@@ -419,6 +419,7 @@ export const expenseByDepartment = [
   { department: 'Sales', value: 420000 },
   { department: 'Referral Partner Network', value: 365000 },
   { department: 'Soil Operations', value: 760000 },
+  { department: 'Contracts', value: 185000 },
   { department: 'Reporting', value: 310000 },
   { department: 'General and Administrative', value: 328000 },
 ];

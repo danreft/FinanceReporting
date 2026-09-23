@@ -7,6 +7,7 @@ import {
   ExceptionReporting,
   ExecutiveSnapshot,
   IncomeStatement,
+  EbitdaDetail,
   RevenueRecognition,
 } from './pages/FinancePages';
 
@@ -29,6 +30,8 @@ export default function App() {
         return <ExecutiveSnapshot filters={financeFilters} />;
       case 'incomeStatement':
         return <IncomeStatement filters={financeFilters} />;
+      case 'ebitdaDetail':
+        return <EbitdaDetail filters={financeFilters} />;
       case 'balanceSheet':
         return <BalanceSheet filters={financeFilters} />;
       case 'cashFlow':
@@ -61,7 +64,7 @@ export default function App() {
         </div>
         <div className="text-right">
           <div className="text-xs" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
-            Last Refreshed: Apr 24, 2026, 8:15 AM
+            Illustrative mock data · live refresh pending
           </div>
         </div>
       </div>
