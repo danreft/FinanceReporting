@@ -147,6 +147,7 @@ function ChartCard({ title, subtitle, height = 220, className = '', children }: 
 function FinanceTable({
   title,
   subtitle,
+  headerControl,
   columns,
   rows,
   onDrillDown,
@@ -154,6 +155,7 @@ function FinanceTable({
 }: {
   title: string;
   subtitle?: string;
+  headerControl?: React.ReactNode;
   columns: string[];
   rows: (string | number)[][];
   onDrillDown?: (rowLabel: string, column: string, value: number, sourceTitle: string) => void;
@@ -171,7 +173,10 @@ function FinanceTable({
 
   return (
     <div className="print-section bg-white border border-[#CFD5D0] p-3 overflow-hidden">
-      <div className="text-sm font-semibold text-[#006637] mb-1" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="text-sm font-semibold text-[#006637]" style={{ fontFamily: 'Merriweather, serif' }}>{title}</div>
+        {headerControl}
+      </div>
       {subtitle && <div className="text-xs text-[#3D654D] mb-3" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>{subtitle}</div>}
       <table className={`w-full border-collapse text-xs ${compactPeriodTable ? 'table-fixed' : ''}`} style={{ fontFamily: 'Source Sans 3, sans-serif' }}>
         {compactPeriodTable && (
@@ -708,6 +713,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
 {
   const dateRange = filters;
   const [topListView, setTopListView] = useState<'customers' | 'vendors'>('customers');
+  const [forecastDays, setForecastDays] = useState(30);
   const [cashDrillDown, setCashDrillDown] = useState<DrillDownRequest | null>(null);
   const [vendorPayablesDrillDown, setVendorPayablesDrillDown] = useState<DrillDownRequest | null>(null);
   const currentPeriodLabel = selectedPeriodLabel(dateRange);
@@ -757,11 +763,14 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
     ['Earned Revenue', selectedSummary.earnedRevenue, selectedSummary.earnedAcres, dealsWithEarnedStage.length],
     ['Final Sales', selectedSummary.finalSales, selectedSummary.finalAcres, finalDeals.length],
   ];
+  const forecastFactor = forecastDays / 30;
+  const expectedCollections = Math.round(735000 * forecastFactor);
+  const scheduledPayables = Math.round(685000 * forecastFactor);
   const cashOutlookRows = [
     ['Current Cash', selectedSummary.cashBalance],
-    ['Expected Customer Collections', 735000],
-    ['Scheduled Payables', -685000],
-    ['Projected Cash', selectedSummary.cashBalance + 50000],
+    ['Expected Customer Collections', expectedCollections],
+    ['Scheduled Payables', -scheduledPayables],
+    ['Projected Cash', selectedSummary.cashBalance + expectedCollections - scheduledPayables],
   ];
   const currentCashDrillDownRows = cashDrillDown
     ? buildCurrentCashDrillDownRows(cashDrillDown.value, selectedMonths, currentPeriodLabel)
@@ -771,6 +780,8 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
     : [];
   const arApRows = [
     ['Total AR', selectedSummary.accountsReceivable],
+    ['First Invoice AR', Math.round(selectedSummary.accountsReceivable * 0.6)],
+    ['Final Invoice AR', selectedSummary.accountsReceivable - Math.round(selectedSummary.accountsReceivable * 0.6)],
     ['Total AP', selectedSummary.accountsPayable],
     ['AR over 90 days', 290000],
     ['Soil Vendor Payables', 360000],
@@ -812,6 +823,7 @@ export function ExecutiveSnapshot({ filters }: FinancePageProps)
           <FinanceTable
             title="Cash Outlook"
             subtitle="Illustrative pending Finance approval"
+            headerControl={<label className="flex items-center gap-1 text-xs text-[#3D654D]" style={{ fontFamily: 'Source Sans 3, sans-serif' }}>Days <select aria-label="Cash Outlook forecast days" value={forecastDays} onChange={(event) => setForecastDays(Number(event.target.value))} className="border border-[#CFD5D0] bg-white px-1 py-0.5 text-[#1A1A1A]">{[30, 60, 90].map((days) => <option key={days} value={days}>{days}</option>)}</select></label>}
             columns={['Cash Outlook', 'Amount']}
             rows={cashOutlookRows}
             onDrillDown={(rowLabel, column, value, sourceTitle) => setCashDrillDown({ rowLabel, column, value, sourceTitle })}
